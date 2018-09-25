@@ -206,8 +206,8 @@
 		Logical: & TRUE or FALSE\\[0.2cm]
 		Numeric: & real, by the math definition (ex. 12.3). Double is a numeric with better precision.\\[0.2cm]
 		Integer: & integer, by the math definition (ex. 12).\\[0.2cm]
-		Character: & text of any length\\[0.2cm]
-		Factor: & a type that represents a \gls{dv}\\[0.2cm]
+		Character: & text of any length; defined by typing ``text'' or 'text'\\[0.2cm]
+		Factor: & a type that represents a \gls{qlv}\\[0.2cm]
 		Ordered: & a type that represents an \gls{ov}\\[0.2cm]
 		List: & a 1D collection of ``things'' (may be strings, numbers, or a mix of them)\\[0.2cm]
 		Vector: & a 1D collection of things of \emph{one type}\\[0.2cm]
@@ -502,7 +502,7 @@ Station        Date                Débit (m3/s)   Remarque
 		
 		\code{read.fwf} is used this way:
 		\begin{minted}[breaklines]{R}
-> debit = read.fwf("D:/megha/Documents/r-tutorial/debit.txt", widths=c(6, 20, 15, 12), header=FALSE, skip=22, strip.white=TRUE, col.names=c('Station', 'Date', 'Debit', 'Remarque'))
+> debit = read.fwf("C:/.../r-tutorial/debit.txt", widths=c(6, 20, 15, 12), header=FALSE, skip=22, strip.white=TRUE, col.names=c('Station', 'Date', 'Debit', 'Remarque'))
 > str(debit)
 'data.frame':   7715 obs. of  4 variables:
 $ Station : int  70401 70401 70401 70401 70401 70401 70401 ...
@@ -535,7 +535,7 @@ Station       Date Debit Remarque
 		
 		With data frames, the column headers will make sense and, should your object have row names, you can remove the \code{row.names} argument.
 		
-		\subsection{Tidy}
+		\subsection{Tidy}\label{subsec:tidy}
 		This section is quite heavy on R programmy-like stuff, so you may want to skip it until you are more familiar with R or actually need to disentangle a data set, whichever comes first.
 		
 		Since their help pages are, in my opinion, easier to understand, I use the functions in the \code{tidyr} package, so you might want to install and load it to follow along.
@@ -580,9 +580,11 @@ Station       Date Debit Remarque
 		\end{figure}
 	
 		\subsubsection{Example}
-		The cancer data mentioned as an example in section~\ref{subsec:gotcha_tidy} will be used as a case study for these functions. First step is to identify the variables: cancer type, sex of patient, number of cases, and number of deaths. Here, we need to make sex its own column; and since there are two columns with female data, we will proceed in several steps: first, make all four columns one ``variable'' with \code{gather}. Arguments \code{key} and \code{value} are simply the name to give to the new columns that \code{gather} will create. The last argument is the columns to ``gather'', while the columns not listed will be duplicated as necessary.
+		The cancer data mentioned as an example in section~\ref{subsec:gotcha_tidy} will be used as a case study for these functions. Data can most easily be copy-pasted into a Spreadsheet software from Table 1 of  the peer-reviewed article version of the report online \cite{siegel_cancer_2018}. As a first step, remove sum lines and columns, remove the thousand separator and tweak header names (also, the hyphen is not a real hyphen, so retype it). 
+		
+		Let's identify the variables: cancer type, sex of patient, number of cases, and number of deaths. Here, we need to make sex its own column; and since there are two columns with female data, we will proceed in several steps: first, make all four columns one ``variable'' with \code{gather}. Arguments \code{key} and \code{value} are simply the name to give to the new columns that \code{gather} will create. The last argument is the columns to ``gather'', while the columns not listed will be duplicated as necessary.
 		\begin{minted}[breaklines]{R}
-> cancer = read.csv('D:/megha/Documents/r-tutorial/cancer.csv')
+> cancer = read.csv('C:/.../r-tutorial/cancer.csv')
 > str(cancer)
 'data.frame':   47 obs. of  5 variables:
 $ cancer       : Factor w/ 47 levels "Acute lymphocytic leukemia",...
@@ -651,6 +653,18 @@ $ deaths: int  640 830 4490 6180 680 480 660 930 7340 9490 ...
 #...
 		\end{minted}
 		
+		Finally, let's correctly specify that ``sex'' is a \gls{qlv} rather than just text.
+		\begin{minted}[breaklines]{R}
+> cancer$sex = as.factor(cancer$sex)
+> str(cancer)
+'data.frame':   94 obs. of  4 variables:
+$ cancer: Factor w/ 47 levels "Acute lymphocytic leukemia",.:...
+$ sex   : Factor w/ 2 levels "female","male": 1 2 1 2 1 2 1 2 ...
+$ cases : int  2670 3290 9140 10380 5620 2960 1510 1940 10160 ...
+$ deaths: int  640 830 4490 6180 680 480 660 930 7340 9490 ...
+
+		\end{minted}
+		
 		There we go! Tidy data set!
 
 \chapter{Data presentation}
@@ -683,7 +697,7 @@ United States of America,1
 
 	Go ahead and load your small csv into R with \code{read.csv}. You can then use the function \code{pie} to produce a pie chart. However, as shown below, a naive approach might disappoint.
 	\begin{minted}[breaklines]{R}
-> ebola = read.csv('D:/megha/Documents/r-tutorial/ebola.csv', header=TRUE)
+> ebola = read.csv('C:/.../r-tutorial/ebola.csv', header=TRUE)
 > ebola
                    Country Deaths
 1                   Guinea   2543
@@ -828,24 +842,167 @@ par()$mar
 > box()
 	\end{minted}
 
-	Now, bar charts often use stacked bars. For example, let's use cancer rates \cite{cancer}. This data includes number of cases and number of deaths by sex and cancer type. If the thing you would most like to compare is the number of cancer by type, you would stack the sexes into one bar, and make one bar for new cases and one bar for deaths.  Data can most easily be copy-pasted into a Spreadsheet software from Table 1 of  the peer-reviewed article version of the report \cite{siegel_cancer_2018}. After removing sum lines and columns, removing the thousand separator, tweaking header names, saving as csv and importing into R, you can produce your bar chart:
+	Now, bar charts often use stacked bars. For example, let's use cancer rates \cite{cancer}. This data includes number of cases and number of deaths by sex and cancer type. If the thing you would most like to compare is the number of cancer by type, you would stack the sexes into one bar. Let's use the tidy version of the data set produced in section~\ref{subsec:tidy}.
 	\begin{minted}[breaklines]{R}
-> cancer = read.csv('C:/Users/Myriam/Documents/r-tutorial/cancer.csv')
-> cancer
-                              cancer cases_male cases_female deaths_male deaths_female
-1                             Tongue      12490         4620        1750           760
-2                              Mouth       7980         5600        1770           880
-...
-47 Other & unspecified primary sites      16520        15290       23950         20610
 > str(cancer)
-'data.frame':   47 obs. of  5 variables:
- $ cancer       : Factor w/ 47 levels "Acute lymphocytic leukemia",..: 41 19 32 27 10 38 36 9 34 3 ...
- $ cases_male   : int  12490 7980 14250 2440 13480 16520 ...
- $ cases_female : int  4620 5600 3340 820 3810 9720 ...
- $ deaths_male  : int  1750 1770 2480 1280 12850 6510 ...
- $ deaths_female: int  760 880 750 360 3000 4290  ...
+'data.frame':   94 obs. of  4 variables:
+$ cancer: Factor w/ 47 levels "Acute lymphocytic leukemia",.:...
+$ sex   : Factor w/ 2 levels "female","male": 1 2 1 2 1 2 1 2 ...
+$ cases : int  2670 3290 9140 10380 5620 2960 1510 1940 10160 ...
+$ deaths: int  640 830 4490 6180 680 480 660 930 7340 9490 ...
 	\end{minted}
+	The help page of \code{barplot} tells you that the first argument can be either a \code{vector} or \code{matrix}. If \code{height} is a \code{vector}, for example the single column \code{cancer\$deaths}, then the barplot shows what one would expect. If \code{height} is a \code{matrix}, then each \emph{column} must be either the values to stack (\code{beside=FALSE}) or the values for a group of bars (\code{beside=TRUE}). To visualize, let's plot data for five short-named cancers in the list. And since this is a perfect occasion, let's learn about a few more figure options: the \code{legend} argument and how to plot several figures into one plot window.
+	\begin{minted}[breaklines]{R}
+> subset=rbind(cancer[11:12,], cancer[17:18,], cancer[35:36,], cancer[63:64,], cancer[79:80,])
+> subset = subset[, 1:3] 
+> subset
+     cancer    sex  cases deaths
+11   Breast female 266120  40920
+12   Breast   male   2550    480
+17    Colon female  47530  23240
+18    Colon   male  49690  27390
+35 Melanoma female  36120   3330
+36 Melanoma   male  55150   5990
+63  Pharynx female   3340    750
+64  Pharynx   male  14250   2480
+79  Thyroid female  40900   1100
+80  Thyroid   male  13090    960
+> fordemo = spread(subset[, 1:3], cancer, cases) # let's just use cases for now
+> fordemo
+sex Breast Colon Melanoma Pharynx Thyroid
+1 female 266120 47530    36120    3340   40900
+2   male   2550 49690    55150   14250   13090
+> # each column of the matrix is one cancer to stack or group
+> str(fordemo)
+'data.frame':   2 obs. of  6 variables:
+$ sex     : Factor w/ 2 levels "female","male": 1 2
+$ Breast  : int  266120 2550
+$ Colon   : int  47530 49690
+$ Melanoma: int  36120 55150
+$ Pharynx : int  3340 14250
+$ Thyroid : int  40900 13090
+> # but you want an actual matrix, not a data frame
+> # with row and column names
+> # and cells containing numbers only
+> fordemo = as.matrix(fordemo[,2:6])
+> fordemo
+Breast Colon Melanoma Pharynx Thyroid
+[1,] 266120 47530    36120    3340   40900
+[2,]   2550 49690    55150   14250   13090
+> rownames(fordemo) = c("female", "male")
+> fordemo
+       Breast Colon Melanoma Pharynx Thyroid
+female 266120 47530    36120    3340   40900
+male     2550 49690    55150   14250   13090
+\end{minted}
+	
+	At this point, your data is ready in the shape that \code{barplot} wants it: it's a matrix with each column representing a stack or group. It's also in the shape \emph{you} want it because the row and column names are readable. Now, let's use \code{mfrow} to plot the results of \code{beside=TRUE} and \code{beside=FALSE} side by side, as seen in figure~\ref{fig:mfrow}.
+	\begin{minted}[breaklines]{R}
+> par(mfrow=c(1,2))   # 1 row, 2 columns, fill by row
+> # par(mfcol=c(1,2)) # 1 row, 2 columns, fill by column
+> # a plot window opens, ready with 1x2 plot regions
+> barplot(fordemo, beside=FALSE, legend=TRUE, main="Parameter beside=FALSE")
+> # first plot appears on the left
+> barplot(fordemo, beside=TRUE, legend=TRUE, main="Parameter beside=TRUE")
+> # second plot appears on the right
+	\end{minted}
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{mfrow.eps}
+		\caption{Comparing the effect of the \code{beside} parameter for a matrix fed to \code{barplot}, using \code{mfrow}.}
+		\label{fig:mfrow}
+	\end{figure}
 
+	Note that setting the \code{legend} argument automatically produces a human-readable result from the row names of the ``fordemo'' matrix.
+	
+	Now, if you want to stack sexes and group cases and deaths per cancer, this is where \code{barplot} would fail you and you would have to resort to a package, for example \code{ggplot2}. According to discussions in the R mailing lists, the basic bar plot function does not support this option because the developers felt it was too much information to fit on one figure, so keep that in mind and ask yourself whether it's a good idea. However, as shown by the pie chart section, I'm not here to judge, so here's a way to do that.
+	
+	\code{ggplot2} is so ubiquitously used to produce peer-review quality graphics in R, while being so different from the basic graphics we have used so far that it warrants a bit of an introduction.
+	
+	\code{ggplot2} works by sequentially adding \emph{layers} from a \emph{data frame}. So first, you say, ``I want to make a new \code{ggplot}''. An empty graphics window opens. Then you say, ``I want to add points to this blank canvas''. Then you can say, ``I want to add a line in addition to the points already there'', and then ``I also want a main title'', and so on. So you will add new function calls separated by a plus sign.
+	
+	With our cancer study case, our situation is that we want to stack sexes, as well as group cases and deaths (which we will call effect) per cancer. You need each of these in their own column, and you need a data frame since that's what \code{ggplot} uses. Our data must be transformed this way:
+	\begin{minted}[breaklines]{R}
+> forgg = gather(subset, "effect", "n", 3:4)
+> forgg
+cancer    sex effect      n
+1    Breast female  cases 266120
+2    Breast   male  cases   2550
+3     Colon female  cases  47530
+4     Colon   male  cases  49690
+5  Melanoma female  cases  36120
+6  Melanoma   male  cases  55150
+7   Pharynx female  cases   3340
+8   Pharynx   male  cases  14250
+9   Thyroid female  cases  40900
+10  Thyroid   male  cases  13090
+11   Breast female deaths  40920
+12   Breast   male deaths    480
+13    Colon female deaths  23240
+14    Colon   male deaths  27390
+15 Melanoma female deaths   3330
+16 Melanoma   male deaths   5990
+17  Pharynx female deaths    750
+18  Pharynx   male deaths   2480
+19  Thyroid female deaths   1100
+20  Thyroid   male deaths    960
+\end{minted}
+	
+	As for the plotting part of the work, \code{ggplot} loves to use scientific notation, so we'll turn that off. \code{ggplot} comes with several ``themes'', which control a series of layout options like background color, presence of grids, etc. We'll use the classic theme since it looks most like the basic graphics package we have been using.
+	\begin{minted}[breaklines]{R}
+options(scipen=999)
+theme_set(theme_classic())
+	\end{minted}
+	
+	\code{ggplot}'s first argument is the source data frame. Then, you will need to specify what it calls an \emph{aesthetic}: what do you want to show in x and y? We want our variable ``n'' to be shown as y, and we want ``effect'' and ``cancer'' on x.
+	
+	This leads me to talk of \emph{facets} and \emph{formulas}. Facets are a \code{ggplot2} thing, while formulas are used throughout R. So basically, we want to divide our graph into several smaller graphs, one for each type of cancer, and show them side by side. So each "subgraph" is a facet. Therefore, we will use ``cancer'' in the facet function, and it leaves ``effect'' as the x in the \code{ggplot}'s aesthetic.
+	
+	As for formulas, they define a more ``talkative'' way for you to specify which relationship you want R to study for you. The most basic form is \code{y \textasciitilde x}, which reads ``y as a function of x''. More elaborate forms include \code{y + z \textasciitilde x}, which is ``y and z as a function of x'' (note, the plus sign means ``and'', not a literal addition), and \code{y \textasciitilde x | a}, which is ``y as a function of x, per value of a''.
+	
+	With this preliminary knowledge, we are ready to look at the code, which produces figure~\ref{fig:ggplot}.
+	\begin{minted}[breaklines]{R}
+> ggplot(forgg, aes(effect, n)) +		
+		# use data frame forgg, x=effect, y=n
+	geom_col(aes(fill=sex)) +		
+		# draw columns, fill them according to sex
+	facet_wrap(~cancer, nrow=1) +	
+		# subdivide as a function of cancer, on 1 row
+	coord_cartesian(ylim = c(0, 300000)) +	
+		# adjust y axis limits
+	scale_fill_manual(values = c("female"="#FF5577", "male"="#0000FF"))
+		#set specific colors
+	\end{minted}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{ggplot.eps}
+		\caption{Number of cases and deaths by sex for five cancers, with the help of \code{ggplot}.}
+		\label{fig:ggplot}
+	\end{figure}
+	
+	Your options of types of plots include: \code{geom\_point} for points, \code{geom\_col} for bars showing heights, \code{geom\_bar} for bars showing counts.
+	
+	You can control color and size of points, as well as fill of bars, by setting the appropriate options in the aesthetic, for example:
+	\begin{minted}[breaklines]{R}
+geom_point(aes(size=population, col=state))
+geom_col(aes(fill=sex))
+	\end{minted}
+	As you may have noted when we made our figure, the legend appears automatically, with the colors and sizes (if relevant) used.
+	
+	You can use \code{facet\_wrap} to make your "subgraphs" follow one after the other, or \code{facet\_grid} to have them form a grid, for instance, see the code below, which produces figure~\ref{fig:facet_grid}. As for layout options regarding colors, titles, annotations, etc, they are so numerous that I can't detail them here. Digging into the help pages and asking the internet how to do things is the way to go.
+	\begin{minted}[breaklines]{R}
+> ggplot(forgg, aes(effect, n)) +
+	geom_col(aes(fill=sex)) +
+	facet_grid(cancer~sex, ) +
+	scale_fill_manual(values = c("female"="#FF5577", "male"="#0000FF"))
+	\end{minted}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{facet_grid.eps}
+		\caption{Grid presentation of number of cases and deaths per cancer per sex.}
+		\label{fig:facet_grid}
+	\end{figure}
 
 	\section{Histogram}
 	\notefor{For continuous variables}
