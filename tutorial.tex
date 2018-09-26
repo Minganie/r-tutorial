@@ -112,7 +112,11 @@
 		Where experimental design is concerned, key factors are randomization, blocking, and replication. If terms like Completely Randomized Design, Latin Squares or Factorial Design are not familiar, I would recommend investing some time into learning the basics of experimental design before embarking in an experiment, in the interest of avoiding some common and easily remedied mistakes (\cite{doe} appears to be a well-rounded textbook ).
 
 \chapter{Unavoidable R before we begin}
-	\section{Packages}
+	Despite the title, this chapter is not meant to be read from start to finish before you get to the other chapters. First, a long text about programming quirks can get pretty sleep-inducing. Second, the concerns addressed will probably not resonate much with you unless you've personally encountered this problem before, so the information retention is likely to be low.
+	
+	That being said, the three first sections (\ref{sec:packages}, \ref{sec:types}, \ref{sec:access}) should probably be read right now if you are not familiar with R at all. The other ones are referenced later in the text when they are relevant and can be read at that time.
+
+	\section{Packages}\label{sec:packages}
 	R \cite{R} should be relatively straightforward to install: download and execute, follow the wizard instructions.
 
 	Where things get a bit more complicated is when it comes to packages. While the basic R program has a lot of functions built-in, there will come a time when you will need something that is not offered out of the box. Thankfully, R has a very dynamic community with a ton of packages. For instance, a very popular package to produce figures is \code{ggplot2}. Let's install it to see how packages are managed in R.
@@ -269,18 +273,18 @@ Country Deaths
 	\end{minted}
 	
 	\section{Misc}
-	\subsection{\code{c} is for concatenate}
-	Sometimes, a function in R will use an argument that is actually a list of things; for example, the limits of the x axis are two values: the minimum and maximum values to display on the graph. Referring back to the types we just saw, R requires a \code{vector} of values. Since it's such a common usage, R offers a quick way to create a vector with the function \code{c()}.
-	\begin{minted}[breaklines]{R}
+		\subsection{\code{c} is for concatenate}
+		Sometimes, a function in R will use an argument that is actually a list of things; for example, the limits of the x axis are two values: the minimum and maximum values to display on the graph. Referring back to the types we just saw, R requires a \code{vector} of values. Since it's such a common usage, R offers a quick way to create a vector with the function \code{c()}.
+		\begin{minted}[breaklines]{R}
 > ... xlim = c(0, 100), color = c(255, 0, 0) ...
-	\end{minted}
+		\end{minted}
 	
-	\subsection{\# is for comments}
-	If you use \code{\#} in R, it will consider anything to its right to be a \emph{comment}, that is, not code, and it will be ignored. You can start a line with it or use it in the middle of a line. It can be useful to leave notes to yourself in long-ish scripts.
+		\subsection{\# is for comments}
+		If you use \code{\#} in R, it will consider anything to its right to be a \emph{comment}, that is, not code, and it will be ignored. You can start a line with it or use it in the middle of a line. It can be useful to leave notes to yourself in long-ish scripts.
 	
-	\subsection{Use argument names}
-	When you use a function, for example \code{barplot}, there are a certain number of unavoidable parameters, followed by several optional parameters. The optional parameters typically have a default value, so if you don't specify them, the function works as expected, using the default values. For example, let's consult the help page for \code{barplot} by typing \code{?barplot} at the R prompt.
-	\begin{minted}[breaklines]{R}
+		\subsection{Use argument names}
+		When you use a function, for example \code{barplot}, there are a certain number of unavoidable parameters, followed by several optional parameters. The optional parameters typically have a default value, so if you don't specify them, the function works as expected, using the default values. For example, let's consult the help page for \code{barplot} by typing \code{?barplot} at the R prompt.
+		\begin{minted}[breaklines]{R}
 ...
 barplot(height, ...)
 
@@ -296,19 +300,88 @@ barplot(height, width = 1, space = NULL,
 	inside = TRUE, plot = TRUE, axis.lty = 0, offset = 0,
 	add = FALSE, args.legend = NULL, ...)
 ...
-	\end{minted}
+		\end{minted}
 	
-	In this example, the parameter \code{height}, which is not followed by an ``='' is a necessary parameter; you can't compute a bar plot without giving it some values to put in the graph! All the other parameters are optional, and the help page lists their default value.
+		In this example, the parameter \code{height}, which is not followed by an ``='' is a necessary parameter; you can't compute a bar plot without giving it some values to put in the graph! All the other parameters are optional, and the help page lists their default value.
 	
-	If you decide you want your bars to be beside one another rather than stacked, you will have to set the parameter \code{beside}, which is the fifth optional parameter. To avoid really strange and unfortunate guesswork on R's part when it tries to figure out which parameter you set among the gazillion optional parameters, \emph{always use the optional parameter names}, for example:
-	\begin{minted}[breaklines]{R}
+		If you decide you want your bars to be beside one another rather than stacked, you will have to set the parameter \code{beside}, which is the fifth optional parameter. To avoid really strange and unfortunate guesswork on R's part when it tries to figure out which parameter you set among the gazillion optional parameters, \emph{always use the optional parameter names}, for example:
+		\begin{minted}[breaklines]{R}
 > heights = c(15, 5, 1, 12, 28)
 > # barplot(heights, TRUE) 
 > # BAD! 
 > # Don't make R guess! 
 > # It's bad at it!
 > barplot(heights, beside = TRUE)	# Good
-	\end{minted}
+		\end{minted}
+		
+		\subsection{Dates}
+		As I may have mentioned, dates in programming are their very own Pandora box. R internally saves its dates as the number of days since January~1st,~1970.
+		
+		In real life, you will likely encounter dates in a file in one of various text formats, for example something like ``mm/dd/yyyy'' (and since not all languages list their dates in the same order, you should pay close attention when dealing with international data), or as three different columns for the day, the month and the year. If you want R to do nice things for you like calculating the number of days between two dates, and convert that to months and days, you need to transform these eminently unstandard formats into R's own format. So let's see how this is done for an arbitrary text format and for the three numeric columns cases.
+		
+			\subsubsection{Text to \code{Date}}
+			For this, let's use the traffic data from the city of Chicago \cite{traffic}. After downloading the csv, in your spreadsheet software, assign appropriate types to the date, vehicle volume, latitude and longitude columns, then tweak header names, save as csv and load into R. You should obtain the following:
+			\begin{minted}[breaklines]{R}
+> traffic = read.csv("C:/.../r-tutorial/traffic.csv")
+> str(traffic)
+'data.frame':   1279 obs. of  9 variables:
+$ ID       : Factor w/ 1279 levels "1","1,000","1,001",..: 453...
+$ Address  : Factor w/ 1203 levels "1 West","10 East",..: 212 ...
+$ Street   : Factor w/ 251 levels "100th St","101st St",..: 40 ..
+$ Date     : Factor w/ 95 levels "1/24/2007","1/30/2007",..:54...
+$ Volume   : int  14600 16500 18200 21600 18300 8600 10000 ...
+$ Direction: Factor w/ 1223 levels "East Bound: 1000 / West Bound: 3400",..: 397 442 484 20 495 257 939 936 981 909 ...
+$ Latitude : num  41.8 41.8 41.8 41.8 41.8 ...
+$ Longitude: num  -87.7 -87.7 -87.6 -87.6 -87.6 ...
+$ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
+			\end{minted}
+			
+			So your date has been read as a factor; dates are a kind of category, I suppose, but R doesn't make computations on factors. You can't subtract blue eyes from green eyes, but you definitely can subtract 2010/01/08 from 2010/02/07 to compute how many days have passed between them.
+			
+			Thankfully, R offers the function \code{as.Date} to convert text to \code{Date}. It uses a series of codes that you can see in the details of the help page for \code{strptime}. For instance, \code{\%m}, \code{\%d} and \code{\%Y} stand for decimal month, decimal day and decimal year including century, respectively. It is used in the following manner:
+			\begin{minted}[breaklines]{R}
+> traffic$Date = as.Date(traffic$Date, format="%m/%d/%Y")
+> str(traffic)
+'data.frame':   1279 obs. of  9 variables:
+$ ID       : Factor w/ 1279 levels "1","1,000","1,001",...
+$ Address  : Factor w/ 1203 levels "1 West","10 East",..: 212 ...
+$ Street   : Factor w/ 251 levels "100th St","101st St",..: 40 ...
+$ Date     : Date, format: "2006-03-09" "2006-02-28" ...
+$ Volume   : int  14600 16500 18200 21600 18300 8600 10000 ...
+$ Direction: Factor w/ 1223 levels "East Bound: 1000 / West Bound: 3400",..: 397 442 484 20 495 257 939 936 981 909 ...
+$ Latitude : num  41.8 41.8 41.8 41.8 41.8 ...
+$ Longitude: num  -87.7 -87.7 -87.6 -87.6 -87.6 ...
+$ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
+			\end{minted}
+			
+			\subsubsection{Three numbers to \code{Date}}
+			While R does not offer a specific function that takes three numbers and returns a date, it is easy enough to build a date string from three numbers, and then feed that to \code{as.Date}. For example, if the dates in the traffic data were in three columns, you could proceed this way:
+			
+			\begin{minted}[breaklines]{R}
+> str(traffic2)
+'data.frame':   1279 obs. of  12 variables:
+#...
+$ Month    : int  3 2 2 2 2 3 3 3 3 3 ...
+$ Day      : int  9 28 28 28 28 9 7 7 7 7 ...
+$ Year     : int  2006 2006 2006 2006 2006 2006 2006 2006 ...
+#...
+> dateStrings = paste(traffic2$Year, traffic2$Month, traffic2$Day, sep="/")
+> dateStrings[1:10]
+[1] "2006/3/9"  "2006/2/28" "2006/2/28" "2006/2/28"
+[5] "2006/2/28" "2006/3/9"  "2006/3/7"  "2006/3/7" 
+[9] "2006/3/7"  "2006/3/7" 
+> traffic2$Date = as.Date(dateStrings, format="%Y/%m/%d")
+> str(traffic2)
+'data.frame':   1279 obs. of  12 variables:
+#...
+$ Date     : Date, format: "2006-03-09" ...
+$ Month    : int  3 2 2 2 2 3 3 3 3 3 ...
+$ Day      : int  9 28 28 28 28 9 7 7 7 7 ...
+$ Year     : int  2006 2006 2006 2006 2006 2006 2006 2006 2006 2006 ...
+#...
+			\end{minted}
+			
+			\subsubsection{\code{Date} to text}
 	
 	\section{Saving, a.k.a scripts}
 	As long as you're doing simple things fitting on two or three lines, you probably won't feel the need to ``save your file''. However, as you start doing more elaborate data treatment or need to document a process used, you will want to save your progress.
@@ -1006,6 +1079,26 @@ geom_col(aes(fill=sex))
 
 	\section{Histogram}
 	\notefor{For continuous variables}
+	
+	A histogram is a representation of a \gls{cv}, and \emph{the bars touch}. It is used to visually present the shape of the distribution by compiling counts for ``bins'', ranges of values. Bins are typically, but not necessarily, of equal width.
+	
+	For our example, let's use traffic data in the city of Chicago \cite{traffic}. 
+	
+	\begin{minted}[breaklines]{R}
+> traffic = read.csv("C:/.../r-tutorial/traffic.csv")
+> str(traffic)
+'data.frame':   1279 obs. of  9 variables:
+$ ID       : Factor w/ 1279 levels "1","1,000","1,001",..: 453...
+$ Address  : Factor w/ 1203 levels "1 West","10 East",..: 212 ...
+$ Street   : Factor w/ 251 levels "100th St","101st St",..: 40 ..
+$ Date     : Factor w/ 95 levels "1/24/2007","1/30/2007",..:54...
+$ Volume   : int  14600 16500 18200 21600 18300 8600 10000 ...
+$ Direction: Factor w/ 1223 levels "East Bound: 1000 / West Bound: 3400",..: 397 442 484 20 495 257 939 936 981 909 ...
+$ Latitude : num  41.8 41.8 41.8 41.8 41.8 ...
+$ Longitude: num  -87.7 -87.7 -87.6 -87.6 -87.6 ...
+$ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
+	\end{minted}
+	
 	
 	\section{Scatter graph}
 	\section{Box and whiskers graph}
