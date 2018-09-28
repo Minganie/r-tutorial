@@ -314,10 +314,10 @@ barplot(height, width = 1, space = NULL,
 > barplot(heights, beside = TRUE)	# Good
 		\end{minted}
 		
-		\subsection{Dates}
+		\subsection{Dates}\label{subsec:dates}
 		As I may have mentioned, dates in programming are their very own Pandora box. R internally saves its dates as the number of days since January~1st,~1970.
 		
-		In real life, you will likely encounter dates in a file in one of various text formats, for example something like ``mm/dd/yyyy'' (and since not all languages list their dates in the same order, you should pay close attention when dealing with international data), or as three different columns for the day, the month and the year. If you want R to do nice things for you like calculating the number of days between two dates, and convert that to months and days, you need to transform these eminently unstandard formats into R's own format. So let's see how this is done for an arbitrary text format and for the three numeric columns cases.
+		In real life, you will likely encounter dates in a file in one of various text formats, for example something like ``mm/dd/yyyy'' (and since not all languages list their dates in the same order, you should pay close attention when dealing with international data), or as three different columns for the day, the month and the year. If you want R to do nice things for you like calculating the number of days between two dates, you need to transform these eminently unstandard formats into R's own format. So let's see how this is done for an arbitrary text format and for the three numeric columns cases.
 		
 			\subsubsection{Text to \code{Date}}
 			For this, let's use the traffic data from the city of Chicago \cite{traffic}. After downloading the csv, in your spreadsheet software, assign appropriate types to the date, vehicle volume, latitude and longitude columns, then tweak header names, save as csv and load into R. You should obtain the following:
@@ -345,7 +345,7 @@ $ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
 'data.frame':   1279 obs. of  9 variables:
 $ ID       : Factor w/ 1279 levels "1","1,000","1,001",...
 $ Address  : Factor w/ 1203 levels "1 West","10 East",..: 212 ...
-$ Street   : Factor w/ 251 levels "100th St","101st St",..: 40 ...
+$ Street   : Factor w/ 251 levels "100th St","101st St",...
 $ Date     : Date, format: "2006-03-09" "2006-02-28" ...
 $ Volume   : int  14600 16500 18200 21600 18300 8600 10000 ...
 $ Direction: Factor w/ 1223 levels "East Bound: 1000 / West Bound: 3400",..: 397 442 484 20 495 257 939 936 981 909 ...
@@ -382,6 +382,25 @@ $ Year     : int  2006 2006 2006 2006 2006 2006 2006 2006 2006 2006 ...
 			\end{minted}
 			
 			\subsubsection{\code{Date} to text}
+			Converting a date to text is straightforward enough and allows you to specify the format you want. By default, R prints dates following the ISO convention of YYYY-MM-DD \cite{calendar}. If you really want your heretic US format, you could use \code{format} (which, by the way, also allows you to format numbers by defining leading zeros or number of decimals).
+			\begin{minted}[breaklines]{R}
+> today = Sys.Date()
+> format(today, format="%m/%d/%y")
+[1] "09/27/18"
+			\end{minted}
+			
+			\subsubsection{\code{Date} computations}
+			You can make calculations on dates. The following examples should tell you the gist of it.
+			\begin{minted}[breaklines]{R}
+> lastyear = Sys.Date()-365
+> lastyear
+[1] "2017-09-27"
+> today-lastyear
+Time difference of 365 days
+> nextmonth=today+30
+> nextmonth
+[1] "2018-10-27"
+			\end{minted}
 	
 	\section{Saving, a.k.a scripts}
 	As long as you're doing simple things fitting on two or three lines, you probably won't feel the need to ``save your file''. However, as you start doing more elaborate data treatment or need to document a process used, you will want to save your progress.
@@ -1082,25 +1101,215 @@ geom_col(aes(fill=sex))
 	
 	A histogram is a representation of a \gls{cv}, and \emph{the bars touch}. It is used to visually present the shape of the distribution by compiling counts for ``bins'', ranges of values. Bins are typically, but not necessarily, of equal width.
 	
-	For our example, let's use traffic data in the city of Chicago \cite{traffic}. 
+	For our example, let's use traffic data in the city of Chicago, with the import process described in section~\ref{subsec:dates}. A simple call to \code{hist}, will produce the figure~\ref{fig:hist}.
 	
 	\begin{minted}[breaklines]{R}
-> traffic = read.csv("C:/.../r-tutorial/traffic.csv")
 > str(traffic)
 'data.frame':   1279 obs. of  9 variables:
-$ ID       : Factor w/ 1279 levels "1","1,000","1,001",..: 453...
+$ ID       : Factor w/ 1279 levels "1","1,000","1,001",...
 $ Address  : Factor w/ 1203 levels "1 West","10 East",..: 212 ...
-$ Street   : Factor w/ 251 levels "100th St","101st St",..: 40 ..
-$ Date     : Factor w/ 95 levels "1/24/2007","1/30/2007",..:54...
+$ Street   : Factor w/ 251 levels "100th St","101st St",...
+$ Date     : Date, format: "2006-03-09" "2006-02-28" ...
 $ Volume   : int  14600 16500 18200 21600 18300 8600 10000 ...
-$ Direction: Factor w/ 1223 levels "East Bound: 1000 / West Bound: 3400",..: 397 442 484 20 495 257 939 936 981 909 ...
+$ Direction: Factor w/ 1223 levels "East Bound: 1000 ..." ...
 $ Latitude : num  41.8 41.8 41.8 41.8 41.8 ...
 $ Longitude: num  -87.7 -87.7 -87.6 -87.6 -87.6 ...
 $ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
+> hist(traffic$Volume, xlab="Car volume", ylab="Count", main="", ylim=c(0, 600))
+> box()
 	\end{minted}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{hist.eps}
+		\caption{Histogram of car volumes in the city of Chicago.}
+		\label{fig:hist}
+	\end{figure}
 	
+	You will note that we fed \code{hist} the list of car volumes, and the function automatically computed the bins and counted how many observations were in each bin before plotting the resulting histogram.
+	
+	There are several ways to compute bins for histograms, but the most used is the Sturges method, used by default in R, which outputs more bins the greater the range of the data (more or less) \cite{hist}.
+	
+	As you may have noted, there are several outliers at the right of the graph, with such small numbers that their bar is barely visible. I don't necessarily recommend this course of action, since you change the representativity of your figure, but you could decide to group together the small bins at the end so they are visible. Let's say you wanted to group together the bins at the right with five or less observations. Here, let's point out a neat feature of R. In order to produce a plot, \code{hist} must compute bins, counts, etc., and it actually gives you access to them if you save the output of \code{hist}. You can then make use those to produce your personalized histogram, producing figure~\ref{fig:histd}.
+	\begin{minted}[breaklines]{R}
+> h = hist(traffic$Volume, xlab="Car volume", ylab="Count", main="", ylim=c(0, 600))
+> h
+$`breaks`
+[1]      0  10000  20000  30000  40000  50000  60000  70000
+[9]  80000  90000 100000 110000 120000 130000 140000 150000
+[17] 160000 170000
+
+$counts
+[1] 255 532 290 141  36  10   6   5   1   0   1   1   0   0
+[15]   0   0   1
+
+$density
+[1] 0.00001993745113 0.00004159499609 0.00002267396403
+[4] 0.00001102423769 0.00000281469898 0.00000078186083
+[7] 0.00000046911650 0.00000039093041 0.00000007818608
+[10] 0.00000000000000 0.00000007818608 0.00000007818608
+[13] 0.00000000000000 0.00000000000000 0.00000000000000
+[16] 0.00000000000000 0.00000007818608
+
+$mids
+[1]   5000  15000  25000  35000  45000  55000  65000  75000
+[9]  85000  95000 105000 115000 125000 135000 145000 155000
+[17] 165000
+
+$xname
+[1] "traffic$Volume"
+
+$equidist
+[1] TRUE
+
+attr(,"class")
+[1] "histogram"
+> h$breaks
+[1]      0  10000  20000  30000  40000  50000  60000  70000
+[9]  80000  90000 100000 110000 120000 130000 140000 150000
+[17] 160000 170000
+> h$counts
+[1] 255 532 290 141  36  10   6   5   1   0   1   1   0   0
+> mybreaks = c(h$breaks[1:7], 170000)
+> mybreaks
+[1]      0  10000  20000  30000  40000  50000  60000 170000
+> h2 = hist(traffic$Volume, breaks=mybreaks, xlab="Car volume", main="")
+> h2
+$`breaks`
+[1]      0  10000  20000  30000  40000  50000  60000 170000
+
+$counts
+[1] 255 532 290 141  36  10  15
+	\end{minted}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{histd.eps}
+		\caption{\emph{Density} histogram of car volumes in the city of Chicago.}
+		\label{fig:histd}
+	\end{figure}
+
+	This figure has \emph{density} as its y axis, meaning that the area (width*height) of all the bars sum to 1. This is the default behavior when using bins of different sizes. Note that your last bin, [60000, 170000[, contains 15 observations, more than the previous bin, while appearing lower in the figure; this is due to the density calculations. The \emph{area} of the bar is representative of its data, not the \emph{height}.
 	
 	\section{Scatter graph}
+	\notefor{For continuous variables}
+	
+	This figure is used to illustrate the relationship between two \glspl{cv}. As an incendiary correlation-is-not-causation example, let's use the National Health Interview Survey data to study the relationship between diabetes and body mass index \cite{nhis}. The Sample Adult file has the information we'll use. The Variable summary file will inform you that the column labels that interest you are DIBEV1 (diagnosis of diabetes), DIBTYPE (diabetes type) and BMI (body mass index). The variable layout will inform you of the meaning of the values in the file.
+	\begin{minted}[breaklines]{R}
+For diabetes diagnosis: 
+  1  Yes
+  2  No
+  3  Borderline or prediabetes
+  7  Refused
+  8  Not ascertained
+  9  Don''t know 
+Type of diabetes
+  1  Type 1
+  2  Type 2
+  3  Other
+  7  Refused
+  8  Not ascertained
+  9  Don''t know 
+\end{minted}
+	And BMI is the number you'd expect multiplied by 100.
+	
+	For once, simply loading the csv into R gives the expected results. I will spare you the sanity check on import integrity, given the number of variables in the file. Let's just remove all the columns we're not interested with at the moment, divide BMI, and correctly create factors from the integer codes for the other two. Then let's take a quick look at sample data:
+	\begin{minted}[breaklines]{R}
+> nhis=read.csv("C:/.../r-tutorial/samadult.csv")
+> nhis$BMI = nhis$BMI/100
+> nhis = as.data.frame(cbind(nhis$BMI, nhis$DIBTYPE, nhis$DIBEV1))
+> colnames(nhis)=c("BMI", "Type", "Diagnosis")
+> nhis$Type = factor(nhis$Type, 
++  levels=c(1, 2, 3, 7, 8, 9), 
++  labels=c("Type I", "Type II", "Other", "Refused", "Not Ascertained", "Don't know"))
+> nhis$Diagnosis = factor(nhis$Diagnosis, 
++  levels=c(1, 2, 3, 7, 8, 9), 
++  labels=c("Yes", "No", "Borderline or prediabetes", "Refused", "Not Ascertained", "Don't know"))
+> str(nhis)
+'data.frame':   26742 obs. of  3 variables:
+$ BMI      : num  29.3 23.1 35.4 43.1 32.3 ...
+$ Type     : Factor w/ 6 levels "Type I","Type II",..: NA NA NA NA NA NA NA 2 1 NA ...
+$ Diagnosis: Factor w/ 6 levels "Yes","No","Borderline or prediabetes",..: 2 2 2 2 2 2 2 1 1 2 ...
+> nhis[1:20,]
+     BMI    Type Diagnosis
+1  29.30    <NA>        No
+2  23.09    <NA>        No
+3  35.44    <NA>        No
+4  43.13    <NA>        No
+5  32.27    <NA>        No
+6  23.25    <NA>        No
+7  24.67    <NA>        No
+8  41.97 Type II       Yes
+9  33.51  Type I       Yes
+10 26.62    <NA>        No
+11 22.61    <NA>        No
+12 28.72    <NA>        No
+13 28.17    <NA>        No
+14 27.83    <NA>        No
+15 36.58 Type II       Yes
+16 21.81    <NA>        No
+17 27.41    <NA>        No
+18 27.80   Other       Yes
+19 27.36   Other       Yes
+20 20.81    <NA>        No
+	\end{minted}
+	
+	Now, to simplify our analysis and our figure, let's just concern ourselves with the diagnosis values of yes or no and diabetes types 1 or 2. To do this, I will use the \code{filter} function. Since R has two \code{filter} functions, one in the \code{stats} and the other in the \code{dplyr} package, I will manually specify which one I want. \code{filter} works by giving it some data, then specifying a condition, and it returns the rows where the condition is verified.
+	
+	In our case, we want all the cases where the diagnosis is ``No'' (in that case, diabetes type is NA). We also want rows where diagnosis is ``Yes'', but only if their value of type is I or II. Verbally, it is:
+	
+	\begin{minted}[breaklines]{R}
+Diagnosis = No 
+	OR 
+(Diagnosis = Yes AND (Type = I OR Type = II))	
+	\end{minted}
+	Note that the parenthesis are important, even though it would not appear to make a difference with our data. Instead, to demonstrate, let's consider this table:
+	
+\begin{tabular}{|c|c|c|}
+	\hline
+	Name & Sex & Eyes \\
+	\hline
+	Sarah & Female & Green \\
+	James & Male & Blue \\
+	Nicholas & Male & Brown \\
+	\hline
+\end{tabular}
+
+Now, let's compare the following parentheses placement:
+\begin{minted}[breaklines]{R}
+Female OR (Male AND blue)
+  => (Sarah) OR (James) => Sarah, James
+(Female OR Male) AND blue
+  => (Sarah, James, Nicholas) AND (blue) => James
+\end{minted}
+	
+	This kind of statement is called boolean algebra, and it definitely needs some getting used to. Moreover, in R, when using ``='' to mean a comparison rather than the assignment of a value to a variable, you must actually type ``==''. \code{|} means ``or'' and \code{\&} means ``and''. A more in-depth look at booleans and conditions is given in section~\ref{subsec:branching}. This leads to the following code:
+	
+	\begin{minted}[breaklines]{R}
+> library(dplyr)
+> nhis = filter(nhis, Diagnosis=="No" | (Diagnosis=="Yes" & (Type=="Type I" | Type=="Type II")))
+> nhis[1:20, ]
+BMI    Type Diagnosis
+1  29.30    <NA>        No
+2  23.09    <NA>        No
+3  35.44    <NA>        No
+4  43.13    <NA>        No
+5  32.27    <NA>        No
+6  23.25    <NA>        No
+7  24.67    <NA>        No
+8  41.97 Type II       Yes
+9  33.51  Type I       Yes
+10 26.62    <NA>        No
+11 22.61    <NA>        No
+12 28.72    <NA>        No
+13 28.17    <NA>        No
+14 27.83    <NA>        No
+15 36.58 Type II       Yes
+16 21.81    <NA>        No
+17 27.41    <NA>        No
+18 20.81    <NA>        No
+19 23.72    <NA>        No
+20 22.33    <NA>        No
+	\end{minted}
+	
 	\section{Box and whiskers graph}
 	
 \chapter{Data description}
@@ -1159,7 +1368,6 @@ $ Location : Factor w/ 1276 levels "(41.651861, -87.54501)",...
 		\subsection{Branching}\label{subsec:branching}
 	\section{Functions}
 	\section{Misc}
-		\subsection{Dates}\label{subsec:dates}
 \chapter{Cheat sheet}
 
 	\section{Plumbing}
