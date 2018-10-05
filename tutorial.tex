@@ -401,6 +401,11 @@ Time difference of 365 days
 > nextmonth
 [1] "2018-10-27"
 			\end{minted}
+			
+			\subsection{Gotcha: graph image format}
+			Assuming you will want to take your graphs out of R at some point, you can save them quite simply by right-clicking anywhere in the plot window and choosing \code{Save as...}. I would recommend \emph{metafile} if you intend to paste it into the Microsoft Office suite, \emph{postscript} any other time you can, and \emph{bitmap} if all else fails.
+			
+			The metafile plays quite well with the Microsoft Office suite, avoiding the blurriness of bitmap in that context. LibreOffice and LaTeX will accommodate vector graphics, i.e. postscript, which means \emph{no} blurring no matter how you scale the image. Bitmap will produce a good old flat image that every piece of software out there will know how to display, but it might appear blurry if you change its size.
 	
 	\section{Saving, a.k.a scripts}
 	As long as you're doing simple things fitting on two or three lines, you probably won't feel the need to ``save your file''. However, as you start doing more elaborate data treatment or need to document a process used, you will want to save your progress.
@@ -857,7 +862,7 @@ Error in pie(ebola) : 'x' values must be positive.
 	\end{minted}
 	Hacky, but it works, and no more time should be dedicated to pie charts, so let's move on.
 
-	\section{Bar chart}
+	\section{Bar chart}\label{sec:barchart}
 	\notefor{For qualitative and discrete variables}
 		
 	A bar chart, sometimes called a line graph, is used to represent a \gls{qlv} or a \gls{dv}, and the bars \emph{do not touch}. As an example, data on infant mortality by country can be found at \href{https://docs.google.com/spreadsheets/d/1OHMMuHbSFKDolNHXsmgHYlkjSKfAZyyY1P-ddMu_Fz0/pub}{Gapminder}~\cite{gapminder}. The import process is detailed in section~\ref{subsec:import}.
@@ -1192,140 +1197,162 @@ $counts
 	\section{Scatter graph}
 	\notefor{For continuous variables}
 	
-	This figure is used to illustrate the relationship between two \glspl{cv}. As an incendiary correlation-is-not-causation example, let's use the National Health Interview Survey data to study the relationship between diabetes and body mass index \cite{nhis}. The Sample Adult file has the information we'll use. The Variable summary file will inform you that the column labels that interest you are DIBEV1 (diagnosis of diabetes), DIBTYPE (diabetes type) and BMI (body mass index). The variable layout will inform you of the meaning of the values in the file.
-	\begin{minted}[breaklines]{R}
-For diabetes diagnosis: 
-  1  Yes
-  2  No
-  3  Borderline or prediabetes
-  7  Refused
-  8  Not ascertained
-  9  Don''t know 
-Type of diabetes
-  1  Type 1
-  2  Type 2
-  3  Other
-  7  Refused
-  8  Not ascertained
-  9  Don''t know 
-\end{minted}
-	And BMI is the number you'd expect multiplied by 100.
+	This figure is used to illustrate the relationship between two \glspl{qtv}. Putting aside correlation-is-not-causation for the time being, let's study the proportion of diabetes and of people self-reporting no exercise in the Community Health Status Indicators study \cite{chsi}.
 	
-	For once, simply loading the csv into R gives the expected results. I will spare you the sanity check on import integrity, given the number of variables in the file. Let's just remove all the columns we're not interested with at the moment, divide BMI, and correctly create factors from the integer codes for the other two. Then let's take a quick look at sample data:
+	The ``CHSI Dataset'' file will inform you that the file ``Risk factors and access to care'' holds the variables we're interested in. Moreover, -9999, -2222, -2222.2, -2, -1111.1, -1111 and -1 are all various forms of missing data. This data is pretty clean, so loading it into R is straightforward.
+	
 	\begin{minted}[breaklines]{R}
-> nhis=read.csv("C:/.../r-tutorial/samadult.csv")
-> nhis$BMI = nhis$BMI/100
-> nhis = as.data.frame(cbind(nhis$BMI, nhis$DIBTYPE, nhis$DIBEV1))
-> colnames(nhis)=c("BMI", "Type", "Diagnosis")
-> nhis$Type = factor(nhis$Type, 
-+  levels=c(1, 2, 3, 7, 8, 9), 
-+  labels=c("Type I", "Type II", "Other", "Refused", "Not Ascertained", "Don't know"))
-> nhis$Diagnosis = factor(nhis$Diagnosis, 
-+  levels=c(1, 2, 3, 7, 8, 9), 
-+  labels=c("Yes", "No", "Borderline or prediabetes", "Refused", "Not Ascertained", "Don't know"))
-> str(nhis)
-'data.frame':   26742 obs. of  3 variables:
-$ BMI      : num  29.3 23.1 35.4 43.1 32.3 ...
-$ Type     : Factor w/ 6 levels "Type I","Type II",..: NA NA NA NA NA NA NA 2 1 NA ...
-$ Diagnosis: Factor w/ 6 levels "Yes","No","Borderline or prediabetes",..: 2 2 2 2 2 2 2 1 1 2 ...
-> nhis[1:20,]
-     BMI    Type Diagnosis
-1  29.30    <NA>        No
-2  23.09    <NA>        No
-3  35.44    <NA>        No
-4  43.13    <NA>        No
-5  32.27    <NA>        No
-6  23.25    <NA>        No
-7  24.67    <NA>        No
-8  41.97 Type II       Yes
-9  33.51  Type I       Yes
-10 26.62    <NA>        No
-11 22.61    <NA>        No
-12 28.72    <NA>        No
-13 28.17    <NA>        No
-14 27.83    <NA>        No
-15 36.58 Type II       Yes
-16 21.81    <NA>        No
-17 27.41    <NA>        No
-18 27.80   Other       Yes
-19 27.36   Other       Yes
-20 20.81    <NA>        No
+> chsi = read.csv("C:/.../r-tutorial/chsi.csv", 
++ na.strings=c(-9999, -2222, -2222.2, -2, -1111.1, -1111, -1))
+> str(chsi)
+'data.frame':   3141 obs. of  31 variables:
+$ State_FIPS_Code            : int  1 1 1 1 1 1 1 1 1 1 ...
+$ County_FIPS_Code           : int  1 3 5 7 9 11 13 15 17 19 ...
+$ CHSI_County_Name           : Factor w/ 1847 levels "Abbeville","Acadia",..: 82 89 100 150 165 226 236 247 ...
+$ CHSI_State_Name            : Factor w/ 51 levels "Alabama","Alaska",..: 1 1 1 1 1 1 1 1 1 1 ...
+$ CHSI_State_Abbr            : Factor w/ 51 levels "AK","AL","AR",..: 2 2 2 2 2 2 2 2 2 2 ...
+$ Strata_ID_Number           : int  29 16 51 42 28 75 76 6 50 ...
+$ No_Exercise                : num  27.8 27.2 NA NA 33.5 NA ...
+$ CI_Min_No_Exercise         : num  20.7 23.2 NA NA 26.3 NA ...
+$ CI_Max_No_Exercise         : num  34.9 31.2 NA NA 40.6 NA ..
+$ Few_Fruit_Veg              : num  78.6 76.2 NA 86.6 74.6 NA ...
+$ CI_Min_Fruit_Veg           : num  69.4 71.2 NA 77.8 66.1 NA ...
+$ CI_Max_Fruit_Veg           : num  87.8 81.3 NA 95.4 83 NA ...
+$ Obesity                    : num  24.5 23.6 25.6 NA 24.2 NA ...
+$ CI_Min_Obesity             : num  17.3 19.5 16.2 NA 17.2 NA ...
+$ CI_Max_Obesity             : num  31.7 27.6 35 NA 31.2 NA ...
+$ High_Blood_Pres            : num  29.1 30.5 NA NA NA NA NA ...
+$ CI_Min_High_Blood_Pres     : num  19.2 24.5 NA NA NA NA NA ...
+$ CI_Max_High_Blood_Pres     : num  39 36.6 NA NA NA NA NA ...
+$ Smoker                     : num  26.6 24.6 17.7 NA 23.6 NA ...
+$ CI_Min_Smoker              : num  19.1 20.3 10.2 NA 16.7 NA ...
+$ CI_Max_Smoker              : num  34 28.8 25.1 NA 30.4 NA ...
+$ Diabetes                   : num  14.2 7.2 6.6 13.1 8.4 NA ...
+$ CI_Min_Diabetes            : num  9.1 5.2 2 4.7 4.4 NA 4.4 ...
+$ CI_Max_Diabetes            : num  19.3 9.3 11.3 21.5 12.4 ...
+$ Uninsured                  : int  5690 19798 5126 3315 8131 ...
+$ Elderly_Medicare           : int  4762 22635 3288 2390 5019 ...
+$ Disabled_Medicare          : int  1209 3839 1092 974 1300 ...
+$ Prim_Care_Phys_Rate        : num  45.3 67 45.8 41.8 16.2 ...
+$ Dentist_Rate               : num  22.6 30.8 24.6 18.6 10.8 ...
+$ Community_Health_Center_Ind: int  1 1 1 1 2 1 1 1 1 2 ...
+$ HPSA_Ind                   : int  2 2 2 1 1 1 2 2 2 1 ...
 	\end{minted}
 	
-	Now, to simplify our analysis and our figure, let's just concern ourselves with the diagnosis values of yes or no and diabetes types 1 or 2. To do this, I will use the \code{filter} function. Since R has two \code{filter} functions, one in the \code{stats} and the other in the \code{dplyr} package, I will manually specify which one I want. \code{filter} works by giving it some data, then specifying a condition, and it returns the rows where the condition is verified.
-	
-	In our case, we want all the cases where the diagnosis is ``No'' (in that case, diabetes type is NA). We also want rows where diagnosis is ``Yes'', but only if their value of type is I or II. Verbally, it is:
-	
+	This file holds data for all the counties in the US. Using every county as a data point, plotting diabetes as a function of lack of exercise is easy. The code below produces figure~\ref{fig:scatter}.
 	\begin{minted}[breaklines]{R}
-Diagnosis = No 
-	OR 
-(Diagnosis = Yes AND (Type = I OR Type = II))	
+plot(chsi$Diabetes ~ chsi$No_Exercise, pch=20,
+	ylab="Proportion of diabetes", 
+	xlab="Proportion of inactive adults", 
+	main="Diabetes and inactivity for every county in the US")
 	\end{minted}
-	Note that the parenthesis are important, even though it would not appear to make a difference with our data. Instead, to demonstrate, let's consider this table:
 	
-\begin{tabular}{|c|c|c|}
-	\hline
-	Name & Sex & Eyes \\
-	\hline
-	Sarah & Female & Green \\
-	James & Male & Blue \\
-	Nicholas & Male & Brown \\
-	\hline
-\end{tabular}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{scatter.eps}
+		\caption{Scatter plot of diabetes and inactivity for US counties.}
+		\label{fig:scatter}
+	\end{figure}
 
-Now, let's compare the following parentheses placement:
-\begin{minted}[breaklines]{R}
-Female OR (Male AND blue)
-  => (Sarah) OR (James) => Sarah, James
-(Female OR Male) AND blue
-  => (Sarah, James, Nicholas) AND (blue) => James
-\end{minted}
+	You may notice that we used the ``formula'' way of specifying what we want to plot, like we did in section~\ref{sec:barchart}. Note that \code{plot(x, y)} also works and would produce the same thing.
 	
-	This kind of statement is called boolean algebra, and it definitely needs some getting used to. Moreover, in R, when using ``='' to mean a comparison rather than the assignment of a value to a variable, you must actually type ``==''. \code{|} means ``or'' and \code{\&} means ``and''. A more in-depth look at booleans and conditions is given in section~\ref{subsec:branching}. This leads to the following code:
+	As you can see, the higher the proportion of physically inactive people in a county, the higher its rate of diabetes. While correlation does not necessarily mean that one causes the other, there is \emph{definitely} a relationship between the two. Without discounting the wealth of research that says how bad inactivity is bad for your blood sugar levels, one cannot conclude on the basis of a graph like this that inactivity itself causes diabetes. For instance, diabetes \emph{and} inactivity could both be caused by a third factor, say, living in a typical US town, where food is overabundant, road infrastructure is designed with cars in mind, and urbanism plans do not favor active transport.
 	
-	\begin{minted}[breaklines]{R}
-> library(dplyr)
-> nhis = filter(nhis, Diagnosis=="No" | (Diagnosis=="Yes" & (Type=="Type I" | Type=="Type II")))
-> nhis[1:20, ]
-BMI    Type Diagnosis
-1  29.30    <NA>        No
-2  23.09    <NA>        No
-3  35.44    <NA>        No
-4  43.13    <NA>        No
-5  32.27    <NA>        No
-6  23.25    <NA>        No
-7  24.67    <NA>        No
-8  41.97 Type II       Yes
-9  33.51  Type I       Yes
-10 26.62    <NA>        No
-11 22.61    <NA>        No
-12 28.72    <NA>        No
-13 28.17    <NA>        No
-14 27.83    <NA>        No
-15 36.58 Type II       Yes
-16 21.81    <NA>        No
-17 27.41    <NA>        No
-18 20.81    <NA>        No
-19 23.72    <NA>        No
-20 22.33    <NA>        No
-	\end{minted}
+	Beyond that, one should also pay attention to the data itself. Here, we consider every county equally. That is, a county of 102~inhabitants in the sticks of Montana is one dot on the graph, the same way as a county of 40~000~Californians. This is a case of \emph{misrepresentation} of data; you give one equal dot to each county, regardless of the number of its residents, or the ratio of people who gave data to the CHIS study. To better represent this, you could easily use \code{ggplot2} to make the size or the transparency of each dot a function of the population of each county.
+	
+	See also section~\ref{sec:cdplot} for a way to plot a more solid dataset, the NHIS raw data, which contains data on individuals, chosen to be representative of the US population as a whole. Since this data presents diabetes as a ``yes/no'' variable, a different, less common technique is used: the conditional-density plot.
 	
 	\section{Box and whiskers graph}
+	\notefor{For a \gls{qtv}}
+	
+	This graph, while a visual representation of data, offers a nice bridge to the next section, since it does a lot of \emph{description} of the data.
+	
+	Let's say you wanted to see if health insurance in the US varied a lot by state. You of course could make a map of this data (I promise you can, see section~\ref{sec:map}), but this would not give you a good picture of the \emph{variability} within the country. Enter the box-and-whiskers graph.
+	
+	Let's use the 2014 US Census Bureau data about health insurance per country graciously publicized by Wikipedia \cite{hic}. This clean data is easily copy-pasted into a Spreadsheet, saved as csv and loaded in R.
+	\begin{minted}[breaklines]{R}
+> hic = read.csv("C:/.../r-tutorial/hic.csv")
+> str(hic)
+'data.frame':   51 obs. of  17 variables:
+$ State: Factor w/ 51 levels "Alabama","Alaska",..: 1 2 3 4 5 ...
+$ X1999: num  12 18.3 19.4 13.9 19 14.1 7.3 9.7 14 17.4 ...
+# ...
+$ X2014: num  12.1 17.2 13.6 11.8 12.4 10.3 6.9 7.8 5.3 16.6 ...
+	\end{minted}
+	
+	Then, making a box-and-whiskers graph is easy:
+	\begin{minted}[breaklines]{R}
+> boxplot(hic$X2014, ylim=c(0, 20),
+ + ylab="Percent of uninsured persons", 
+ + main="Uninsured rate for US states")
+	\end{minted}
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{boxplot.eps}
+		\caption{Boxplot of the uninsured rate among US states.}
+		\label{fig:boxplot}
+	\end{figure}
+
+	The lower and upper ``whiskers'' represent the minimum and maximum values found in your dataset, so in our case, between roughly 3 and 20\% in 2014. The ``box'' represents 25, 50 and 75\% of data points, so the darker middle line is the median, at around 10\%. Since the box is rather squished vertically between long whiskers, you can conclude that most states are near the median, with fewer outliers stretching further out.
+	
+	To showcase a bit more of the possibilities of the boxplot, let's look at all the years together. To do this, we'll need to tidy up the data with a good use of \code{gather}, and then remove the "X" in front of the year number.
+	\begin{minted}[breaklines]{R}
+> library(tidyr)
+> hic = gather(hic, key="year", value="rate", 2:17)
+> hic$year = as.integer(substring(hic$year, 2, 5))
+> str(hic)
+'data.frame':   816 obs. of  3 variables:
+$ State: Factor w/ 51 levels "Alabama","Alaska",..: 1 2 3 4 5 ...
+$ year : int  1999 1999 1999 1999 1999 1999 1999 1999 1999 ...
+$ rate : num  12 18.3 19.4 13.9 19 14.1 7.3 9.7 14 17.4 ...
+> boxplot(hic$rate ~ hic$year, ylim=c(0, 30),
+ + ylab="Percent of uninsured persons", 
+ + main="Uninsured rate for US states")
+	\end{minted}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{combined_boxplot.eps}
+		\caption{Boxplot of the uninsured rate among US states between 1999 and 2014.}
+		\label{fig:oboxplot}
+	\end{figure}
+
+	As you can see in figure~\ref{fig:oboxplot}, there is sometimes a single dot above or below a whisker, indicating that this lonely data point is sufficiently far away from the others to be plotted on its own. This behavior can be controlled with the \code{range} option. By default, points that are \textgreater1.5*``height of the box'' are plotted alone. These lonesome outliers seem to become less common in the last few years of the data set, and the maxima and minima are both becoming lower. Overall range also seems to shrink, which means states are more similar since the adoption of a federal statute on health insurance.
+	
+	To bridge even further ahead to the section about actual statistics, let's underline that this is an \emph{impression}. How big must the change in range be for us to conclude that the states are really becoming more similar? That is the kind of question for inferential statistics.
+	
+	\section{Putting it all together: summary figure}
+	
 	
 \chapter{Data description}
+Data is typically described regarding three characteristics: where is the ``middle'' of the distribution (center tendency), how ``spread out'' is it (dispersion), and what ``shape'' is it.
+
 	\section{Center tendency measurements}
 		\subsection{Mean}
+		\notefor{Tons of pleasant math characteristics}
+		
 		\subsection{Median}
+		\notefor{Arguably the best central tendency measurement}
+		
 		\subsection{Mode}
+		\notefor{Useful if you want to guess}
+		
 	\section{Dispersion measurements}
 		\subsection{Range}
 		\subsection{Variance}
+		\notefor{Tons of pleasant math characteristics}
+		
 		\subsection{Standard deviation}
 		\subsection{Coefficient of variation}
 		\subsection{Quartiles and percentiles}
+		
 	\section{Shape measurements}
 		\subsection{Skewness}
+		\notefor{Symmetry}
+		
 		\subsection{Kurtosis}
+		\notefor{Flatness}
+		
 		\subsection{L-moments}
 
 \chapter{Probabilities}
@@ -1335,17 +1362,19 @@ BMI    Type Diagnosis
 	\section{Probability Mass/Density Function}
 
 \chapter{Statistics}
-	\section{Binomial distribution}
-	\section{Multinomial distribution}
-	\section{Poisson distribution}
-	\section{Inverse binomial distribution}
-	\section{Hypergeometric distribution}
-	\section{Normal distribution}
-	\section{Exponential distribution}
-	\section{Gamma distribution}
-	\section{c2 distribution}
-	\section{Fisher-Snedecor distribution}
-	\section{Student’s law}
+	\section{Discrete variables}
+		\subsection{Binomial distribution}
+		\subsection{Multinomial distribution}
+		\subsection{Poisson distribution}
+		\subsection{Inverse binomial distribution}
+		\subsection{Hypergeometric distribution}
+	\section{Continuous variables}
+		\subsection{Normal distribution}
+		\subsection{Exponential distribution}
+		\subsection{Gamma distribution}
+		\subsection{c2 distribution}
+		\subsection{Fisher-Snedecor distribution}
+		\subsection{Student’s law}
 
 \chapter{Inferential statistics}
 	\section{Student’s test}
@@ -1368,6 +1397,117 @@ BMI    Type Diagnosis
 		\subsection{Branching}\label{subsec:branching}
 	\section{Functions}
 	\section{Misc}
+	
+\chapter{More eccentric graphs}
+	\section{Rate plot}\label{sec:cdplot}
+	\notefor{For a categorical variable as a function of a continuous variable}
+	As an incendiary correlation-is-not-causation example, let's use the National Health Interview Survey data to study the relationship between type~II diabetes and body mass index \cite{nhis}. The Sample Adult file has the information we'll use. The Variable summary file will inform you that the column labels that interest you are DIBEV1 (diagnosis of diabetes), DIBTYPE (diabetes type) and BMI (body mass index). The variable layout will inform you of the meaning of the values in the file.
+	\begin{minted}[breaklines]{R}
+	For diabetes diagnosis: 
+	1  Yes
+	2  No
+	3  Borderline or prediabetes
+	7  Refused
+	8  Not ascertained
+	9  Don''t know 
+	Type of diabetes
+	1  Type 1
+	2  Type 2
+	3  Other
+	7  Refused
+	8  Not ascertained
+	9  Don''t know 
+	\end{minted}
+	And BMI is the number you'd expect multiplied by 100.
+	
+	For once, simply loading the csv into R gives sensible results. I will spare you the sanity check on import integrity, given the number of variables in the file. Let's just remove all the columns we're not interested with at the moment, divide BMI, and correctly create factors from the integer codes for the other two. Then let's take a quick look at sample data:
+	\begin{minted}[breaklines]{R}
+	> nhis=read.csv("C:/.../r-tutorial/samadult.csv")
+	> nhis$BMI = nhis$BMI/100
+	> nhis = as.data.frame(cbind(nhis$BMI, nhis$DIBTYPE, nhis$DIBEV1))
+	> colnames(nhis)=c("BMI", "Type", "Diagnosis")
+	> nhis$Type = factor(nhis$Type, 
+	+  levels=c(1, 2, 3, 7, 8, 9), 
+	+  labels=c("Type I", "Type II", "Other", "Refused", "Not Ascertained", "Don't know"))
+	> nhis$Diagnosis = factor(nhis$Diagnosis, 
+	+  levels=c(1, 2, 3, 7, 8, 9), 
+	+  labels=c("Yes", "No", "Borderline or prediabetes", "Refused", "Not Ascertained", "Don't know"))
+	> str(nhis)
+	'data.frame':   26742 obs. of  3 variables:
+	$ BMI      : num  29.3 23.1 35.4 43.1 32.3 ...
+	$ Type     : Factor w/ 6 levels "Type I","Type II",..: NA NA ...
+	$ Diagnosis: Factor w/ 6 levels "Yes","No", ...
+	> nhis[1:10,]
+	BMI    Type Diagnosis
+	1  29.30    <NA>        No
+	2  23.09    <NA>        No
+	3  35.44    <NA>        No
+	4  43.13    <NA>        No
+	5  32.27    <NA>        No
+	6  23.25    <NA>        No
+	7  24.67    <NA>        No
+	8  41.97 Type II       Yes
+	9  33.51  Type I       Yes
+	10 26.62    <NA>        No
+	\end{minted}
+	
+	Now, to simplify our analysis and our figure, let's just concern ourselves with the diagnosis values of yes or no and diabetes type~II. To do this, I will use the \code{filter} function. Since R has two \code{filter} functions, one in the \code{stats} and the other in the \code{dplyr} package, I will manually specify which one I want. \code{filter} works by giving it some data, then specifying a condition, and it returns the rows where the condition is verified.
+	
+	In our case, we want all the cases where the diagnosis is ``No'' (in that case, diabetes type is NA). We also want rows where diagnosis is ``Yes'', but only if their value of type is II. Verbally, it is:
+	
+	\begin{minted}[breaklines]{R}
+	Diagnosis = No 
+	OR 
+	(Diagnosis = Yes AND Type = II)
+	\end{minted}
+	
+	Note that the parenthesis are important, even though it would not appear to make a difference with our data. Instead, to demonstrate, let's consider this table:
+	
+	\begin{tabular}{|c|c|c|}
+		\hline
+		Name & Sex & Eyes \\
+		\hline
+		Sarah & Female & Green \\
+		James & Male & Blue \\
+		Nicholas & Male & Brown \\
+		\hline
+	\end{tabular}
+	
+	Now, let's compare the following parentheses placement:
+	\begin{minted}[breaklines]{R}
+	Female OR (Male AND blue)
+	=> (Sarah) OR (James) => Sarah, James
+	(Female OR Male) AND blue
+	=> (Sarah, James, Nicholas) AND (blue) => James
+	\end{minted}
+	
+	This kind of statement is called boolean algebra, and it definitely needs some getting used to. Moreover, in R, when using ``='' to mean a comparison rather than the assignment of a value to a variable, you must actually type ``==''. \code{|} means ``or'' and \code{\&} means ``and''. A more in-depth look at booleans and conditions is given in section~\ref{subsec:branching}. This leads to the following code:
+	
+	\begin{minted}[breaklines]{R}
+	> library(dplyr)
+	> nhis = filter(nhis, Diagnosis=="No" | (Diagnosis=="Yes" & Type=="Type II"))
+	> nhis[1:10, ]
+	BMI    Type Diagnosis
+	1  29.30    <NA>        No
+	2  23.09    <NA>        No
+	3  35.44    <NA>        No
+	4  43.13    <NA>        No
+	5  32.27    <NA>        No
+	6  23.25    <NA>        No
+	7  24.67    <NA>        No
+	8  41.97 Type II       Yes
+	9  26.62    <NA>        No
+	10 22.61    <NA>        No
+	\end{minted}
+	
+	Now, our goal is to plot rate of diabetes in relation to BMI. To do so, we will have to compute this rate; the very word \emph{rate} implies several individuals used to calculate a proportion, so we will have to group the adults present in the file. To do this, we will make use of \code{hist} again.
+	
+	\section{Violin}
+	\notefor{A better box and whiskers}
+	
+	\section{Map}\label{sec:map}
+	\notefor{For any variable as a function of a geographic variable}
+	
 \chapter{Cheat sheet}
 
 	\section{Plumbing}
