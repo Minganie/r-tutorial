@@ -1344,47 +1344,215 @@ Data is typically described regarding three characteristics: where is the ``midd
 		
 		...where $\overline{x}$ is the mean, $x_i$ is each observation, and $n$ is the number of observations.
 		
-		While the basic principle is very simple, there are a few subtleties that are worth pointing out about the mean. Let's start with a simple example. We will use Fisher's Iris data set, which comes already bundled in R. Calculating the average is a simple case of calling up the function \code{mean}.
+		While the basic principle is very simple, there are a few subtleties that are worth pointing out about the mean. Since salaries are a classic example here, let's use those of the employees of the Athletics department of Michigan Univsersity~\cite{ums}. And since I can't imagine why he's not in the list, let's add the head coach, Jim Harbaugh, at 7,004,000\$~\cite{jim}. Copy-paste the table into a spreadsheet, remove empty lines, add Mr.~Harbaugh, do the usual number format tweaks, then load into R. Calculating the average is a simple case of calling up the function \code{mean}.
 		
 		\begin{minted}[breaklines]{R}
-> iris
-    Sepal.Length Sepal.Width Petal.Length Petal.Width
-1            5.1         3.5          1.4         0.2
-2            4.9         3.0          1.4         0.2
-3            4.7         3.2          1.3         0.2
-#...
-Species
-1       setosa
-2       setosa
-3       setosa
-#...
-> str(iris)
-'data.frame':   150 obs. of  5 variables:
-$ Sepal.Length: num  5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
-$ Sepal.Width : num  3.5 3 3.2 3.1 3.6 3.9 3.4 3.4 2.9 3.1 ...
-$ Petal.Length: num  1.4 1.4 1.3 1.5 1.4 1.7 1.4 1.5 1.4 1.5 ...
-$ Petal.Width : num  0.2 0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 ...
-$ Species     : Factor w/ 3 levels "setosa","versicolor",..: ...
-> mean(iris$Sepal.Length)
-[1] 5.843333
+> umsalaries = read.csv("C:/.../r-tutorial/um_athletics_salaries.csv")
+> str(umsalaries)
+'data.frame':   369 obs. of  4 variables:
+$ Name      : Factor w/ 369 levels "Ablauf, David S",..: 137 ...
+$ Title     : Factor w/ 132 levels "Academic Advisor/Couns ..."
+$ Department: Factor w/ 1 level "Athletics": 1 1 1 1 1 1 ...
+$ Salary    : int  7004000 1000000 1000000 1000000 842550 ...
+> mean(umsalaries$Salary)
+[1] 118022.5
 		\end{minted}
-		There you have it. However, one can also compute a mean from a frequency table, with the following formula:
 		
-		\[
-		\overline{x}=\frac{\sum\limits_{i=1}^k f_i.x_i}{n}
-		\]
+		Note that if some employees had a missing salary, you can determine what to do with missing data with the argument \code{na.rm}.
 		
-		...where $i$ represents each class, $f_i$ is the frequency of this class and $x_i$ the value of the variable in this class. With our iris data, for example, one could produce a frequency table of sepal length by iris species.
+		Now, as you saw, calculating the mean is easy enough with R. However, to understand what the average entails, let's take a closer look at the data. The following code lead to the histogram in figure~\ref{fig:ums}.
 		
-		It is also the \emph{center of mass} of the distribution.
+		\begin{minted}[breaklines]{R}
+> options(scipen=999)
+> h = hist(umsalaries$Salary, 
+	xlab="Salaries", xlim=c(0, 8000000), 
+	ylim=c(0, 400), 
+	main="Salaries of the Athletics department of Michigan University")
+> abline(v=118022.5, col="red")
+> box()
+> h
+$`breaks`
+[1]       0  500000 1000000 1500000 2000000 2500000 3000000
+[8] 3500000 4000000 4500000 5000000 5500000 6000000 6500000
+[15] 7000000 7500000
+
+$counts
+[1] 363   5   0   0   0   0   0   0   0   0   0   0   0   0   1
+
+#...
+\end{minted}
+
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1.0\textwidth]{salaries.eps}
+			\caption{Michigan University salaries.}
+			\label{fig:ums}
+		\end{figure}
 		
+		If you remember, our mean came out as 118,022.50\$. If you take a second look at the histogram now, that is the red vertical line, near the left end of the distribution. If the goal of an average is to tell you where the ``middle'' of a distribution is, you have to wonder where the ``middle'' of such an asymmetric histogram actually is and whether it means anything at all. Since the mathematic formula of the mean spreads the sum of all values equally over all of them, you can think of it as the \emph{center of mass} of the distribution. Since a lot of low values reside to the left of the red line, and a few high values far to the right, the red line is the ``point of equilibrium'' of this mass.
+		
+		While I will not contest that the mean is a useful metric to give you an idea of the ``middle'' of a list of values, I wish to make the point that the usefulness of the average is limited when the distribution is asymmetrical.
+		
+			\subsubsection{Standard error}
+			Now, let's look at the mean from a different perspective. Let's say you are interested by the nose-to-tail length of one specific species of fish in one particular lake. Let's further assume that it's a small species of fodder fish where all sizes can be captured using one type of trap cage.
+			
+			(If you were interested in large fishes like cod, for instance, the size of the net you choose would \emph{de facto} eliminate smaller individuals who can slip through. Did I mention experimental design is super important?)
+			
+			Let's say it's a super endangered species with a grand total of 100 individuals left in the world, whose sizes in millimeters are shown below.
+		
+			\begin{minted}[breaklines]{R}
+> fishies
+[1]  6.653727  8.091868  8.522104  9.038613  9.177935 10.537482
+[7] 10.788898 11.169217 11.250873 11.272964 11.524758 11.832570
+[13] 11.837743 11.934911 12.027187 12.283124 12.388730 12.554695
+[19] 12.586544 12.627581 12.675485 12.941469 13.031906 13.063111
+[25] 13.067909 13.123860 13.236292 13.396793 13.405203 13.466648
+[31] 13.540592 13.542691 13.602745 13.895082 13.898869 13.958740
+[37] 14.124031 14.153446 14.263436 14.284507 14.301187 14.415875
+[43] 14.601420 14.618754 14.798551 14.822237 14.910379 14.939965
+[49] 14.941777 14.987264 15.016763 15.053211 15.170931 15.450270
+[55] 15.492681 15.522237 15.601398 15.609749 15.704461 15.711137
+[61] 16.210493 16.251649 16.472377 16.498656 16.663045 16.794268
+[67] 16.852466 16.924979 17.013302 17.338347 17.395273 17.443367
+[73] 17.444365 17.506961 17.526659 17.639866 17.814593 18.007851
+[79] 18.068755 18.108487 18.346849 18.446874 18.508666 18.551282
+[85] 18.683468 18.753444 18.763917 18.804852 18.969312 19.331139
+[91] 19.391159 19.408782 19.645286 19.998824 20.197807 20.576269
+[97] 20.784767 20.922783 21.389299 22.962449
+> mean(fishies)
+[1] 15.26858
+			\end{minted}
+			
+			So that value of 15.26858~mm is the \emph{real} average size of \emph{Fishus fishius} individuals. However, if you go out in the field, put your trap cages down, and wait, you might catch ten of the individuals, and if your experimental design is smart, they will be picked at random, i.e., there is \emph{no bias} in your sampling. It would be perfectly reasonable for you to then compute the mean of this sample and say, this is a good \emph{estimate} of the average size of \emph{all} \emph{F. fishius}. Let's see what it does:
+			
+			\begin{minted}[breaklines]{R}
+> sample = sample(fishies, 10)
+> sample
+[1] 14.41587 15.60140 13.03191 16.21049 14.15345 16.66304
+[7] 13.06311 13.12386 10.53748 22.96245
+> mean(sample)
+[1] 14.97631
+
+> #... But if you come back the next day and do the same
+> # thing again, you might get:
+> sample = sample(fishies, 10)
+> sample
+[1] 12.28312 13.60275 11.16922 14.61875 13.06311 18.75344
+[7] 17.44337 18.10849 13.06791 19.64529
+> mean(sample)
+[1] 15.17554
+
+> # And one day, you might even pick the ten smallest
+> # fishes in the lake, and then you'd get:
+> sample = fishies[1:10]
+> sample
+[1]  6.653727  8.091868  8.522104  9.038613  9.177935 10.537482
+[7] 10.788898 11.169217 11.250873 11.272964
+> mean(sample)
+[1] 9.650368
+			\end{minted}
+			
+			The point here is that if you \emph{sample} individuals from a population, the mean of the sample is not equal to the mean of the population. It is dependent on the effects of random sampling. And you better hope that sampling is unbiased, or your sample mean will be even less representative of the population mean.
+			
+			But the first two samples look pretty good, right? So, judging from those samples, you have a good idea of the average size of fishes in the population. But if you pick individuals at random, once in a blue moon, you \emph{will} get a ridiculous sample like the third one. Keep repeating an experiment, and the unlikely will occur.
+			
+			(Just ask your gamer friends, they'll have something to say about that time when 23~tries of something with a theoretical drop rate of 54\% yielded 0~successes. They'll be understandably frustrated but they just might be the one person among 12~million it happened to. Not speaking from personal experience, ahem.)
+			
+			If you keep repeating the sampling, something a little mind-bending happens: the sample means has a distribution of its own. So let's use R to virtually set your traps and randomly pick 10~individuals out of the population and compute the sample mean 200~times. The new bit of code, the \code{for} loop, is not the point here, and it will be explained at length in section~\ref{subsec:iteration}. The interesting part is figure~\ref{fig:md}.
+			
+			\begin{minted}[breaklines]{R}
+means = numeric(200) #create empty vector with 200 zeros in it
+
+for(i in 1:200) {		# do the following 200 times
+	sample = sample(fishies, 10)
+	means[i] = mean(sample)	# save the sample mean
+}
+hist(means,
+	xlab="Sample mean", xlim=c(12, 18),
+	main="")
+			\end{minted}
+			
+			The average of a sample will vary from sample to sample, and the values close to the population average happen more often, leading to a classic bell-shaped distribution.
+
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{mean_distribution.eps}
+				\caption{Means of 200 samples of 10 fishes from the population of 100 fishes.}
+				\label{fig:md}
+			\end{figure}
+			
+			Obviously, the bigger your sample, the better your estimate. If you put your cages down and wait until you've caught 100~different \emph{F. fishius}, obviously, you will have the perfect mean. At the opposite side of the spectrum, if you capture only one individual and take that as a population mean, your error is likely to be much greater.
+			
+			Again using R programming that is not the point here, let's virtually sample our same 100 fishes population repeatedly. Let's test all sample sizes from 1 to 100~individuals, and repeat each sample size 1000~times. Further, let's use (sample mean - population mean) as a measure of error, and let's square it to avoid negative values. As you might expect, your average error goes down quickly as you pick a bigger sample size, as seen in figure~\ref{fig:avge}.
+			
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{avg_error.eps}
+				\caption{Average error for 1000~samplings for every possible sample size.}
+				\label{fig:avge}
+			\end{figure}
+			
+			\begin{minted}[breaklines]{R}
+real_mean = mean(fishies)
+
+error = numeric(100)
+tmpe = numeric(1000)
+
+for(n in 1:100) {    # for each sample size
+  for(i in 1:1000) { # for 1000 repetitions
+    sample = sample(fishies, n) # sample n fishes out of the 100
+    tmpe[i] = (mean(sample)-real_mean)^2 # compute error for this time
+  }
+  error[n] = mean(tmpe) # average all errors for this sample size
+}
+plot(x=1:100, y=error, type="l",
+  xlab="Sample size",
+  ylab="Average error, squared")
+			\end{minted}
+			
+			So what we have just done is measure the \emph{precision} of the sample mean as a function of sample size. Evidently, that's a very useful metric. However, in real life, you won't be going back to your lake and repeating every sample size 1000~times. (Unless you're a monk, figuratively, or literally, like Mendel, who grew 10,000~pea plants in 8~years, hand-pollinating every pair~\cite{mendel}.)
+			
+			This sampling effect leads me to introduce the \emph{standard error}, (not to be confused with the \emph{standard deviation}, which we will see in section~\ref{sec:dispersion}). The formula for the standard error is as follows:
+			
+			\[
+			s_{\overline{x}} = \frac{s}{n}
+			\]
+			
+			... where $s_{\overline{x}}$ is the standard error, $s$ is the standard deviation and $n$ is the sample size. Glossing over the definition of standard deviation for now, let's see how the standard error varies with sample size with our \emph{F. fishius}.
+			
+			
 		\subsection{Median}
 		\notefor{Arguably the best central tendency measurement}
 		
+		This leads in perfectly to the second measure of central tendency, the median, which is less susceptible to extreme values than the mean. The median is literally the middle value of a distribution; if you sort all the values in order, the one in the middle is the median. (Technically, if you have an even number of observations, the median is the average of the two middle values.)
+		
+		In R, calculating the median is again a simple case of calling the appropriate function, \code{median}.
+		
+		To contrast the median and the mean, let's zoom in to the salaries that are most common, under 600,000\$, and compare the value of the mean (in red) and the median (in blue). The code below yields figure~\ref{fig:median}.
+		
+		\begin{minted}[breaklines]{R}
+> median(umsalaries$Salary)
+[1] 65000
+> real_salaries = umsalaries$Salary[umsalaries$Salary < 600000]
+> hist(real_salaries,
+	xlab="Salary", ylim=c(0, 300), main="")
+	abline(v=118022.5, col="red")
+	abline(v=65000, col="blue")
+		\end{minted}
+		
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1.0\textwidth]{median.eps}
+			\caption{Common salaries at the Athletics department of Michigan University.}
+			\label{fig:median}
+		\end{figure}
+	
+		The blue line looks closer to the ``middle'' than the red line, doesn't it? The red line has been pulled towards the extreme high value of Mr.~Harbaugh, while the blue line hasn't. If you are looking to \emph{describe} a distribution, I argue that the median will give you a better idea of the central tendency than the mean for this reason. However, the mean has mathematical properties that give it more applications in the realm of inferential statistics, as we will see in chapter~\ref{chap:inferential}.
+	
 		\subsection{Mode}
 		\notefor{Useful if you want to guess}
 		
-	\section{Dispersion measurements}
+	\section{Dispersion measurements}\label{sec:dispersion}
 		\subsection{Range}
 		\subsection{Variance}
 		\notefor{Tons of pleasant math characteristics}
@@ -1423,7 +1591,7 @@ $ Species     : Factor w/ 3 levels "setosa","versicolor",..: ...
 		\subsection{Fisher-Snedecor distribution}
 		\subsection{Student’s law}
 
-\chapter{Inferential statistics}
+\chapter{Inferential statistics}\label{chap:inferential}
 	\section{Student’s test}
 	\section{Student’s paired test}
 	\section{Bartlett’s test}
