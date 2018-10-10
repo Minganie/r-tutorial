@@ -1194,7 +1194,7 @@ $counts
 
 	This figure has \emph{density} as its y axis, meaning that the area (width*height) of all the bars sum to 1. This is the default behavior when using bins of different sizes. Note that your last bin, [60000, 170000[, contains 15 observations, more than the previous bin, while appearing lower in the figure; this is due to the density calculations. The \emph{area} of the bar is representative of its data, not the \emph{height}.
 	
-	\section{Scatter graph}
+	\section{Scatter plot}
 	\notefor{For continuous variables}
 	
 	This figure is used to illustrate the relationship between two \glspl{qtv}. Putting aside correlation-is-not-causation for the time being, let's study the proportion of diabetes and of people self-reporting no exercise in the Community Health Status Indicators study \cite{chsi}.
@@ -1322,7 +1322,12 @@ $ rate : num  12 18.3 19.4 13.9 19 14.1 7.3 9.7 14 17.4 ...
 	To bridge even further ahead to the section about actual statistics, let's underline that this is an \emph{impression}. How big must the change in range be for us to conclude that the states are really becoming more similar? That is the kind of question for inferential statistics.
 	
 	\section{Putting it all together: summary figure}
-	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{data_presentation.png}
+		\caption{When to plot what how and why.}
+		\label{fig:summary}
+	\end{figure}
 	
 \chapter{Data description}
 Data is typically described regarding three characteristics: where is the ``middle'' of the distribution (center tendency), how ``spread out'' is it (dispersion), and what ``shape'' is it.
@@ -1330,6 +1335,48 @@ Data is typically described regarding three characteristics: where is the ``midd
 	\section{Center tendency measurements}
 		\subsection{Mean}
 		\notefor{Tons of pleasant math characteristics}
+		
+		Everyone knows what a mean, also called average, is, if only for its widespread use. It is the sum of all observations, divided by the number of observations. Formally, this is:
+		
+		\[
+			\overline{x} = \frac{\sum\limits_{i=1}^n x_{i}}{n}
+		\]
+		
+		...where $\overline{x}$ is the mean, $x_i$ is each observation, and $n$ is the number of observations.
+		
+		While the basic principle is very simple, there are a few subtleties that are worth pointing out about the mean. Let's start with a simple example. We will use Fisher's Iris data set, which comes already bundled in R. Calculating the average is a simple case of calling up the function \code{mean}.
+		
+		\begin{minted}[breaklines]{R}
+> iris
+    Sepal.Length Sepal.Width Petal.Length Petal.Width
+1            5.1         3.5          1.4         0.2
+2            4.9         3.0          1.4         0.2
+3            4.7         3.2          1.3         0.2
+#...
+Species
+1       setosa
+2       setosa
+3       setosa
+#...
+> str(iris)
+'data.frame':   150 obs. of  5 variables:
+$ Sepal.Length: num  5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
+$ Sepal.Width : num  3.5 3 3.2 3.1 3.6 3.9 3.4 3.4 2.9 3.1 ...
+$ Petal.Length: num  1.4 1.4 1.3 1.5 1.4 1.7 1.4 1.5 1.4 1.5 ...
+$ Petal.Width : num  0.2 0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 ...
+$ Species     : Factor w/ 3 levels "setosa","versicolor",..: ...
+> mean(iris$Sepal.Length)
+[1] 5.843333
+		\end{minted}
+		There you have it. However, one can also compute a mean from a frequency table, with the following formula:
+		
+		\[
+		\overline{x}=\frac{\sum\limits_{i=1}^k f_i.x_i}{n}
+		\]
+		
+		...where $i$ represents each class, $f_i$ is the frequency of this class and $x_i$ the value of the variable in this class. With our iris data, for example, one could produce a frequency table of sepal length by iris species.
+		
+		It is also the \emph{center of mass} of the distribution.
 		
 		\subsection{Median}
 		\notefor{Arguably the best central tendency measurement}
