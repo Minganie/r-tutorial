@@ -420,6 +420,42 @@ Time difference of 365 days
 			Assuming you will want to take your graphs out of R at some point, you can save them quite simply by right-clicking anywhere in the plot window and choosing \code{Save as...}. I would recommend \emph{metafile} if you intend to paste it into the Microsoft Office suite, \emph{postscript} any other time you can, and \emph{bitmap} if all else fails.
 			
 			The metafile plays quite well with the Microsoft Office suite, avoiding the blurriness of bitmap in that context. LibreOffice and LaTeX will accommodate vector graphics, i.e. postscript, which means \emph{no} blurring no matter how you scale the image. Bitmap will produce a good old flat image that every piece of software out there will know how to display, but it might appear blurry if you change its size.
+			
+			\subsection{Esoteric arithmetic operators}
+			
+			While I don't think I need to tell you what \code{+}, \code{-}, \code{*} and \code{/} do, \code{\^}, \code{\%}, \code{\%/\%} and \code{\%\%} might require an explanation.
+			
+			Addition, subtraction, multiplication and division work on numbers but also on vectors, assuming they are of the same length. For example:
+			\begin{minted}[breaklines]{R}
+> x
+[1]  1 34  2  5
+> y
+[1]  2  8 12  5
+> x+y
+[1]  3 42 14 10
+> x/y
+[1] 0.5000000 4.2500000 0.1666667 1.0000000
+			\end{minted}
+			
+			\code{\^} is the operator for an exponent, for example $2^3$ would be computed this way:
+			\begin{minted}[breaklines]{R}
+> 2^3
+[1] 8
+			\end{minted}
+			
+			\code{\%/\%} and \code{\%\%} compute the quotient and remainder (also called a modulo) of a division, respectively. For example:
+			\begin{minted}[breaklines]{R}
+> x
+[1]  1 34  2  5
+> y
+[1]  2  8 12  5
+> x/y       # Gives real numbers, not integers
+[1] 0.5000000 4.2500000 0.1666667 1.0000000
+> x%/%y     # 1/2, 34/8, 2/12, 5/5
+[1] 0 4 0 1
+> x%%y      # 1%2, 34%8, 2%12, 5%5
+[1] 1 2 2 0
+			\end{minted}
 	
 	\section{Saving, a.k.a scripts}
 	As long as you're doing simple things fitting on two or three lines, you probably won't feel the need to ``save your file''. However, as you start doing more elaborate data treatment or need to document a process used, you will want to save your progress.
@@ -1407,7 +1443,7 @@ $counts
 		
 		While I will not contest that the mean is a useful metric to give you an idea of the ``middle'' of a list of values, I wish to make the point that the usefulness of the average is limited when the distribution is asymmetrical.
 		
-			\subsubsection{Standard error}
+			\subsubsection{Sample mean distribution and standard error}\label{subsubsec:se}
 			Now, let's look at the mean from a different perspective. Let's say you are interested by the nose-to-tail length of one specific species of fish in one particular lake. Let's further assume that it's a small species of fodder fish where all sizes can be captured using one type of trap cage.
 			
 			(If you were interested in large fishes like cod, for instance, the size of the net you choose would \emph{de facto} eliminate smaller individuals who can slip through. Did I mention experimental design is super important?)
@@ -1466,7 +1502,7 @@ $counts
 [1] 9.650368
 			\end{minted}
 			
-			The point here is that if you \emph{sample} individuals from a population, the mean of the sample is not equal to the mean of the population. It is dependent on the effects of random sampling. And you better hope that sampling is unbiased, or your sample mean will be even less representative of the population mean.
+			The point here is that if you \emph{sample} individuals from a population, the mean of the sample is not equal to the mean of the population. That is why mathematicians use two different symbols: $\mu$ for the population mean and $\overline{x}$ for the sample mean. The sample mean is dependent on the effects of random sampling. And you better hope that sampling is unbiased, or your sample mean will be even less representative of the population mean.
 			
 			But the first two samples look pretty good, right? So, judging from those samples, you have a good idea of the average size of fishes in the population. But if you pick individuals at random, once in a blue moon, you \emph{will} get a ridiculous sample like the third one. Keep repeating an experiment, and the unlikely will occur.
 			
@@ -1597,13 +1633,218 @@ plot(x=1:100, y=error, type="l",
 		\subsection{Mode}
 		\notefor{Useful if you want to guess}
 		
+		The mode is a metric that only really makes sense with categorical data, that is, qualitative or discrete variables. It is simply the value that appears \emph{most often} in the distribution.
+		
+		For example, using the salaries again, but rounding them to the nearest 10,000\$, we would get a discrete variable, as shown below (glossing over the function \code{roundTo}, which I defined myself, see section~\ref{sec:functions}.)
+		
+		\begin{minted}[breaklines]{R}
+> rounded = roundTo(umsalaries$Salary, to=10000)
+> table(rounded)  # computes the frequencies for each value
+rounded
+30000   40000   50000   60000   70000   80000   90000  100000 
+20      26      81      55      43      25      15      20 
+110000  120000  130000  140000  150000  160000  170000  180000 
+9       3      12       2      10       6       2       4 
+190000  200000  210000  220000  230000  250000  260000  300000 
+4       4       2       1       3       3       4       1 
+350000  360000  400000  450000  500000  530000  840000 1000000 
+2       1       2       1       2       1       1       3 
+7000000 
+1 
+> length(rounded)
+[1] 369
+> mean(rounded)
+[1] 118482.4
+> median(rounded)
+[1] 70000
+		\end{minted}
+		
+		As you can see, the value 50,000\$ is the most frequent, happening 81~times out of the 369~salaries. It is the mode. I computed the median and the mean for the purposes of the demonstration below.
+		
+		So, let's pretend there's a game show. They have all the salaries on slips of paper in a basket, and they ask you to guess which salary will come out next time they pick one slip of paper.  What will you guess? You could try the mean, since that's used all the time. Or maybe the median, since it's a ``better'' metric? Nope, the best guess is the mode, since it's the most frequent slip of paper. Just for fun, let's play that game 100~times, and see how you do when you guess mean, median or mode:
+		
+		\begin{minted}[breaklines]{R}
+> samples = numeric(100) # empty vector to save the picked value
+> for(i in 1:100) # play the game 100 times
++ {
++   samples[i] = sample(rounded, 1) # pick one salary out of the rounded salaries
++ }
+> samples==120000 # which values are equal to the rounded(mean)?
+[1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[11] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[21] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[31] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[41] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[51] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE FALSE
+[61] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[71] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[81] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[91] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+> # TRUE is worth 1 and FALSE is worth 0, 
+> # ...so you can actually sum booleans
+> sum(samples==120000) # mean
+[1] 1
+> # You'd have won once out of a 100 games
+> sum(samples==70000) # median
+[1] 12
+> # Winning 12 times out of a 100 games, a little better
+> sum(samples==50000) # mode
+[1] 20
+> # Best guess, you win 20 out of 100 games, so roughly 1 in 5
+> # 20/100 = 0.20, similar to 81/369, the frequency of
+> # ...50000$ slips in the basket
+> 81/369
+[1] 0.2195122
+	\end{minted}
+		
 	\section{Dispersion measurements}\label{sec:dispersion}
 		\subsection{Range}
+		\notefor{range = max - min}
+		
+		Quite simply, the range is the difference between the maximum and minimum values of a dataset. It informs you on the total spread of your data.
+		
+		However, it doesn't tell you anything beyond that. You don't know whether data is spread equally from minimum to maximum, if they're grouped to one side with one outlier on the other, etc.
+		
 		\subsection{Variance}
 		\notefor{Tons of pleasant math characteristics}
 		
-		\subsection{Standard deviation}
-		\subsection{Coefficient of variation}
+		The variance (and its square-rooted derivative the standard deviation) is the most widely used measure of dispersion. It is the square of the difference between a random point in the distribution and the mean of the distribution. Intuitively, it tell you that in general, a value should be ``that far'' from the mean.
+		
+		It follows that a distribution with a small variance will be closely clustered around the mean, while a distribution with a high variance will be spread out all over the place. Two datasets can have the same mean while still being different in how spread out they are, as seen in figure~\ref{fig:var}. Both distributions ``peak'' at the same place, at a value of 50, but the peak is more or less flat depending on the variance.
+		
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1.0\textwidth]{var.eps}
+			\caption{Two distributions with the same mean but different variances.}
+			\label{fig:var}
+		\end{figure}
+	
+		The formula for the variance actually suffers from the same type of the-sample-is-not-the-population considerations as we discussed (at length) in section~\ref{subsubsec:se}. Before we dive into it, let's all hug a mathematician again, because I'll only be explaining \emph{why} the formula is tweaked, not how they figured that was the right tweak.
+		
+		So if we live in a theoretical world, where we know every single individual from the population, the variance is:
+		
+		\[
+			\sigma^2 = \frac{1}{N}\sum_{i=1}^{N} (x_i - \mu)^2
+		\]
+		
+		... where $\sigma^2$ is the variance, $N$ is the population size, $x_i$ is each observation, and $\mu$ is the population mean.
+		
+		This means that, for every observation, you calculate the distance between the observation and the average, square it, sum it, then divide by the population size. In other words, you compute the \emph{mean of the squared error}. So far so good, this gives you an idea that in general, an observation will be ``this far'' from the average, give or take a square and a square root.
+		
+		This is where it gets tricky. And complicated, I admit. So if we go back to our \species{R. virtualis} fishies, you will remember that we \emph{sample} the population. That means that what we know is the \emph{sample mean}, $\overline{x}$, not the \emph{population mean}, $\mu$. You may look a couple paragraphs up and notice that the formula up there uses $\mu$, not $\overline{x}$. Uh-oh.
+		
+		The basic problem is that since $\overline{x}$ is derived from your sample rather than the whole population, the $x_i$'s in your sample will be a smidge closer to it than they would have been from the population average. So the sum will be a little smaller than it should have been. This leads to a \emph{bias} in the variance, and bias is bad.
+		
+		Thankfully, your friendly mathematician colleagues figured out that you could correct this bias, in general, by using this formula when dealing with the sample of a population:
+		
+		\[
+		s^2 = \frac{1}{n-1}\sum_{i=1}^{n} (x_i - \overline{x})^2
+		\]
+		
+		... where $s^2$ is the sample variance, $n$ is the population size, $x_i$ are the observations, and $\overline{x}$ is the sample mean.
+		
+			\subsubsection{Standard deviation}
+			
+			The standard deviation is simply the square root of the variance. For the theoretical population:
+			
+			\[
+			\sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N} (x_i - \mu)^2}
+			\]
+			
+			... and for the sample:
+	
+			\[
+			s = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n} (x_i - \overline{x})^2}
+			\]
+			
+			\subsubsection{Coefficient of variation}
+			
+			The coefficient of variation is a \emph{relative} measure of dispersion derived from the variance. The formula is:
+			
+			\[
+			c_v = \frac{s}{\overline{x}}
+			\]
+			
+			It is useful when you want to compare the spread of two datasets with different means. For instance, let's consider 25~recently sold 3+~bedroom, 2+~bathroom houses sold in Washington, DC and Pensacola, FL \cite{houses_pfl, houses_wdc}.
+			
+			\begin{minted}[breaklines]{R}
+> houses = read.csv("C:/.../r-tutorial/houses.csv")
+> str(houses)
+'data.frame':   25 obs. of  2 variables:
+$ DC       : int  767500 510000 933000 346000 1460000 360000 ...
+$ Pensacola: int  350000 228000 131500 139000 138000 117000 ...
+> houses
+        DC Pensacola
+1   767500    350000
+2   510000    228000
+3   933000    131500
+4   346000    139000
+5  1460000    138000
+6   360000    117000
+7  1070000    170000
+8  1010000    260000
+9   332000    264000
+10  625000    130000
+11  315000    215000
+12 1050000    155000
+13 1230000    265000
+14 1650000    310000
+15 1150000    110000
+16 1190000    445000
+17  369000    135000
+18 1750000   1615000
+19  753000    175000
+20  540000    274000
+21 2150000    127000
+22  375000    204000
+23  530000    156000
+24 1700000    387702
+25  465000    320000
+> # format will just put a thousand separator for readability
+> # apply will be covered in the Iteration subsection
+> format(apply(houses, 2, mean), big.mark=",") # mean
+         DC   Pensacola 
+"905,220.0" "272,848.1" 
+> format(apply(houses, 2, sd), big.mark=",") # standard deviation
+         DC   Pensacola 
+"526,943.8" "294,350.9" 
+			\end{minted}
+			
+			As you can see, the average price of the sold houses in Washington DC is much higher than in Pensacola and accordingly, the standard deviation is bigger. However, the standard deviation is smaller relative to the mean for DC than for FL. This is what the coefficient of variation is getting at, as seen below and in figure~\ref{fig:houses}.
+			
+			\begin{minted}[breaklines]{R}
+> format(apply(houses, 2, sd)/apply(houses, 2, mean), big.mark=",", digits=2) # coefficient of variation
+    DC Pensacola 
+"0.58"    "1.08"
+> h1 = hist(houses$DC)
+> h2 = hist(houses$Pensacola)
+> turquoise = rgb(64/255, 224/255, 208/255, 0.3)
+> cherry = rgb(246/255, 220/255, 234/255, 0.5)
+> plot(h2, col=turquoise,
+ + xlab="Sale value", xlim=c(0, 2500000),
+ + ylab="Frequency",
+ + main="")
+> plot(h1, col=cherry, add=TRUE)
+> legend("topright", c("Washington, DC", "Pensacola, FL"), 
+ + fill=c(cherry, turquoise))
+			\end{minted}
+			
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{houses.png}
+				\caption{Recent sale prices for two USA cities.}
+				\label{fig:houses}
+			\end{figure}
+			
+			In Pensacola, one outlier makes the histogram stretch far to the right, while this is not the case for Washington, DC. The selling price is \emph{relatively} more spread out in Pensacola than in Washington, DC.
+			
+			\emph{Note:} While a coefficient of variation is a scale-free metric, you should \emph{not} use it to compare datasets in different units. See the wikipedia page for a great example using Celsius and Fahrenheit \cite{cov}.
+			
+			\subsubsection{Sample variance distribution}
+			
+			\begin{minted}[breaklines]{R}
+			\end{minted}
+		
 		\subsection{Quartiles and percentiles}
 		
 	\section{Shape measurements}
@@ -1654,15 +1895,27 @@ plot(x=1:100, y=error, type="l",
 \chapter{Programming}
 	\section{Sequence, iteration, branching}
 		\subsection{Iteration}\label{subsec:iteration}
+		Do apply
+		
 		\subsection{Branching}\label{subsec:branching}
-	\section{Functions}
+	\section{Functions}\label{sec:functions}
+	Do mode
+	Do se?
+	
 	\section{Misc}
 		\subsection{Real saga}
 		\subsection{Rounding}
 		
 		\begin{minted}[breaklines]{R}
 			round(.5 + -2:4) # IEEE / IEC rounding: -2  0  0  2  2  4  4
+			
+			roundTo <- function(x,to=10)
+			{
+			to*(x%/%to + (x%%to/to>=0.5))
+			}
 		\end{minted}
+		
+		
 	
 \chapter{More eccentric graphs}
 	\section{Rate plot}\label{sec:cdplot}
