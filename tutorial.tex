@@ -31,6 +31,7 @@
 }
 
 \newcommand{\code}[1]{\textsf{\ttfamily #1}}
+\newcommand{\species}[1]{\textit{#1}}
 \newcommand{\notefor}[1]{\hfill\textbf{\textit{#1}}}
 \renewcommand{\glstextformat}[1]{\textbf{#1}}
 \addbibresource{Rtutorial.bib}
@@ -230,7 +231,7 @@
 	Some of the types presented in the previous section group several values. At some point, you'll want to access one or many of the elements, but not all. Let's say you have a data frame, for example ebola deaths by country \cite{who}:
 	\begin{minted}[breaklines]{R}
 > ebola
-Country Deaths
+                   Country Deaths
 1                   Guinea   2543
 2                  Liberia   4809
 3             Sierra Leone   3956
@@ -248,7 +249,7 @@ Country Deaths
 	If you want to access lines, elements or columns, you can use the \code{[row, column]} operator, like so:
 	\begin{minted}[breaklines]{R}
 > ebola[1,]
-Country Deaths
+  Country Deaths
 1  Guinea   2543
 > ebola[1,2]
 [1] 2543
@@ -266,7 +267,20 @@ Deaths
 	In the case you want to access several items at once, you can use a colon inside the brackets, i.e. \code{[begin:end]} like so:
 	\begin{minted}[breaklines]{R}
 > ebola[1:3,]
-Country Deaths
+       Country Deaths
+1       Guinea   2543
+2      Liberia   4809
+3 Sierra Leone   3956
+	\end{minted}
+	
+	You can also use the bracket operator to \emph{filter} your data, that is, to select only certain values. For example, you could select the list of deaths which are greater than~10, or the countries where there has been more than 10~deaths.
+	
+	\begin{minted}[breaklines]{R}
+> ebola$Deaths[ebola$Deaths > 10] #deaths where deaths>10
+[1] 2543 4809 3956
+> #ebola[rows where deaths>10, all columns]
+> ebola[ebola$Deaths > 10,] 
+       Country Deaths
 1       Guinea   2543
 2      Liberia   4809
 3 Sierra Leone   3956
@@ -1398,7 +1412,7 @@ $counts
 			
 			(If you were interested in large fishes like cod, for instance, the size of the net you choose would \emph{de facto} eliminate smaller individuals who can slip through. Did I mention experimental design is super important?)
 			
-			Let's say it's a super endangered species with a grand total of 100 individuals left in the world, whose sizes in millimeters are shown below.
+			Let's say it's a super endangered species called \species{Raropisces virtualis} with a grand total of 100 individuals left in the world, whose sizes in millimeters are shown below.
 		
 			\begin{minted}[breaklines]{R}
 > fishies
@@ -1423,7 +1437,7 @@ $counts
 [1] 15.26858
 			\end{minted}
 			
-			So that value of 15.26858~mm is the \emph{real} average size of \emph{Fishus fishius} individuals. However, if you go out in the field, put your trap cages down, and wait, you might catch ten of the individuals, and if your experimental design is smart, they will be picked at random, i.e., there is \emph{no bias} in your sampling. It would be perfectly reasonable for you to then compute the mean of this sample and say, this is a good \emph{estimate} of the average size of \emph{all} \emph{F. fishius}. Let's see what it does:
+			So that value of 15.26858~mm is the \emph{real} average size of \species{R. virtualis} individuals. However, if you go out in the field, put your trap cages down, and wait, you might catch ten of the individuals, and if your experimental design is smart, they will be picked at random, i.e., there is \emph{no bias} in your sampling. It would be perfectly reasonable for you to then compute the mean of this sample and say, this is a good \emph{estimate} of the average size of \emph{all} \species{R. virtualis}. Let's see what that might mean:
 			
 			\begin{minted}[breaklines]{R}
 > sample = sample(fishies, 10)
@@ -1456,9 +1470,9 @@ $counts
 			
 			But the first two samples look pretty good, right? So, judging from those samples, you have a good idea of the average size of fishes in the population. But if you pick individuals at random, once in a blue moon, you \emph{will} get a ridiculous sample like the third one. Keep repeating an experiment, and the unlikely will occur.
 			
-			(Just ask your gamer friends, they'll have something to say about that time when 23~tries of something with a theoretical drop rate of 54\% yielded 0~successes. They'll be understandably frustrated but they just might be the one person among 12~million it happened to. Not speaking from personal experience, ahem.)
+			(Just ask your gamer friends, they'll have something to say about that time when 23~tries of something with a theoretical rate of 54\% yielded 0~successes. They'll be understandably frustrated but they just might be the one among 12~million players it happened to. Not speaking from personal experience, ahem.)
 			
-			If you keep repeating the sampling, something a little mind-bending happens: the sample means has a distribution of its own. So let's use R to virtually set your traps and randomly pick 10~individuals out of the population and compute the sample mean 200~times. The new bit of code, the \code{for} loop, is not the point here, and it will be explained at length in section~\ref{subsec:iteration}. The interesting part is figure~\ref{fig:md}.
+			If you keep repeating the sampling, something a little mind-bending happens: the sample means has a distribution of its own. So let's use R to virtually set your cages in the lake and randomly pick 10~individuals out of the population and compute the mean of that sample, and repeat the whole operation 200~times. The new bit of code, the \code{for} loop, is not the point here, and it will be explained at length in section~\ref{subsec:iteration}. The interesting part is figure~\ref{fig:md}.
 			
 			\begin{minted}[breaklines]{R}
 means = numeric(200) #create empty vector with 200 zeros in it
@@ -1472,7 +1486,7 @@ hist(means,
 	main="")
 			\end{minted}
 			
-			The average of a sample will vary from sample to sample, and the values close to the population average happen more often, leading to a classic bell-shaped distribution.
+			As you can see, sample averages of around 15, which is the population average, happen most often; the \emph{average of sample averages} is the population average. Sample average follows a classic bell-shaped distribution.
 
 			\begin{figure}[h]
 				\centering
@@ -1481,9 +1495,9 @@ hist(means,
 				\label{fig:md}
 			\end{figure}
 			
-			Obviously, the bigger your sample, the better your estimate. If you put your cages down and wait until you've caught 100~different \emph{F. fishius}, obviously, you will have the perfect mean. At the opposite side of the spectrum, if you capture only one individual and take that as a population mean, your error is likely to be much greater.
+			Obviously, the bigger your sample, the better your estimate. If you put your cages down and wait until you've caught 100~different \species{R. virtualis}, obviously, you will have the perfect mean. At the opposite side of the spectrum, if you capture only one individual and take that as a population mean, your error is likely to be much greater.
 			
-			Again using R programming that is not the point here, let's virtually sample our same 100 fishes population repeatedly. Let's test all sample sizes from 1 to 100~individuals, and repeat each sample size 1000~times. Further, let's use (sample mean - population mean) as a measure of error, and let's square it to avoid negative values. As you might expect, your average error goes down quickly as you pick a bigger sample size, as seen in figure~\ref{fig:avge}.
+			Again using R programming that is not the point here, let's virtually sample our imaginary population repeatedly. Let's test all sample sizes from 1 to 100~individuals, and repeat each sample size 1000~times. Further, let's use \code{absolute(sample mean - population mean)} as a measure of error, that is, the distance between the sample and population means. As you might expect, your average error goes down quickly as you pick a bigger sample size, as seen in figure~\ref{fig:avge}.
 			
 			\begin{figure}[h]
 				\centering
@@ -1501,43 +1515,74 @@ tmpe = numeric(1000)
 for(n in 1:100) {    # for each sample size
   for(i in 1:1000) { # for 1000 repetitions
     sample = sample(fishies, n) # sample n fishes out of the 100
-    tmpe[i] = (mean(sample)-real_mean)^2 # compute error for this time
+    tmpe[i] = abs(mean(sample)-real_mean) # compute error for this time
   }
   error[n] = mean(tmpe) # average all errors for this sample size
 }
 plot(x=1:100, y=error, type="l",
   xlab="Sample size",
-  ylab="Average error, squared")
+  ylab="Average error")
 			\end{minted}
 			
-			So what we have just done is measure the \emph{precision} of the sample mean as a function of sample size. Evidently, that's a very useful metric. However, in real life, you won't be going back to your lake and repeating every sample size 1000~times. (Unless you're a monk, figuratively, or literally, like Mendel, who grew 10,000~pea plants in 8~years, hand-pollinating every pair~\cite{mendel}.)
+			So what we have just done is measure the \emph{precision} of the sample mean as a function of sample size. Evidently, that's a very useful metric. However, in real life, you won't be going back to your lake and repeating every sample size 1000~times. (Unless you're a monk, figuratively, or literally, like Mendel, who grew 10,000~pea plants in 8~years, hand-pollinating every pair~\cite{mendel}.) What you will do is take \emph{one} sample, and get \emph{one} value of mean, and the error could be any point for that sample size in figure~\ref{fig:acte}. Since you don't know the ``real mean'' of the population, you can't compute your actual error, but if you could get the value of the red line, that is, the average error for that sample size, you'd be in business.
 			
-			This sampling effect leads me to introduce the \emph{standard error}, (not to be confused with the \emph{standard deviation}, which we will see in section~\ref{sec:dispersion}). The formula for the standard error is as follows:
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{actual_error.png}
+				\caption{Sample errors for 1000~repetitions of each sample size.}
+				\label{fig:acte}
+			\end{figure}
+		
+			Thankfully for you, ordinary-person-who-only-uses-not-makes-statistics (I'm in there too, don't worry), some smart mathematicians came up with a solution! Let's all hug a mathematician today, they're a treasure.
+			
+			This general measure of the precision of a sample mean is called the \emph{standard error}, (not to be confused with the \emph{standard deviation}, which we will see in section~\ref{sec:dispersion}). The formula for the standard error is as follows:
 			
 			\[
 			s_{\overline{x}} = \frac{s}{n}
 			\]
 			
-			... where $s_{\overline{x}}$ is the standard error, $s$ is the standard deviation and $n$ is the sample size. Glossing over the definition of standard deviation for now, let's see how the standard error varies with sample size with our \emph{F. fishius}.
+			... where $s_{\overline{x}}$ is the standard error, $s$ is the standard deviation and $n$ is the sample size. Glossing over the definition of standard deviation for now, this formula allows you to compute the precision of the sample mean with a single sample. Of course, if you repeat the sampling process, you will get different values of standard error, since this value is computed with whatever you get out of your random sampling. However, contrary to the ``distance'' error shown on figure~\ref{fig:acte}, the standard error is pretty consistent for reasonable sample sizes (i.e. not tiny samples). As a demonstration, figure~\ref{fig:ste} shows the standard errors computed from 1000~samplings of each sample size.
 			
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{standard_error.png}
+				\caption{Standard errors for 1000~repetitions of each sample size.}
+				\label{fig:ste}
+			\end{figure}
+		
+			There is no function to compute the standard error in R, but it's a simple matter of dividing the standard deviation by the sample size, like so, for instance:
+			
+			\begin{minted}[breaklines]{R}
+> sample
+[1] 17.230860 11.661620 16.713139 13.267614 17.825505 17.048323
+[7] 15.843759 12.580526 15.479187 12.532484 14.751772 12.722589
+#...
+[97] 18.553211 18.877419 16.514153 14.546831
+> n
+[1] 100
+> se = sd(sample)/n
+> se
+[1] 0.0340778
+			\end{minted}
 			
 		\subsection{Median}
 		\notefor{Arguably the best central tendency measurement}
 		
-		This leads in perfectly to the second measure of central tendency, the median, which is less susceptible to extreme values than the mean. The median is literally the middle value of a distribution; if you sort all the values in order, the one in the middle is the median. (Technically, if you have an even number of observations, the median is the average of the two middle values.)
+		Rewinding to the discussion of the mean's sensitivity to extreme values leads in perfectly to the second measure of central tendency, the median. The median is literally the middle value of a distribution; if you sort all the values in order, the one in the middle is the median. (Technically, if you have an odd number of observations, the median is the middle value; if you have an even number of observations, the median is the average of the two middle values.)
 		
-		In R, calculating the median is again a simple case of calling the appropriate function, \code{median}.
+		In R, calculating the median is a simple case of calling the appropriate function, \code{median}.
 		
-		To contrast the median and the mean, let's zoom in to the salaries that are most common, under 600,000\$, and compare the value of the mean (in red) and the median (in blue). The code below yields figure~\ref{fig:median}.
+		Compared to the mean, the median is less sensitive to extreme values, since it uses the \emph{rank} rather than the \emph{value} of the list of numbers. To contrast the median and the mean, let's go back to the salaries of employees of the Athletics department at Michigan University. If we zoom in to the salaries that are most common, that is, under 600,000\$, we can compare the value of the mean (in red) and the median (in blue). The code below yields figure~\ref{fig:median}.
 		
 		\begin{minted}[breaklines]{R}
 > median(umsalaries$Salary)
 [1] 65000
 > real_salaries = umsalaries$Salary[umsalaries$Salary < 600000]
-> hist(real_salaries,
-	xlab="Salary", ylim=c(0, 300), main="")
-	abline(v=118022.5, col="red")
-	abline(v=65000, col="blue")
+> # ^ that's filtering, see 2.3
+> hist(real_salaries, xlab="Salary", 
+ + xlim=c(0, 600000), ylim=c(0, 200), main="")
+> abline(v=118022.5, col="red")
+> abline(v=65000, col="blue")
 		\end{minted}
 		
 		\begin{figure}[h]
@@ -1547,7 +1592,7 @@ plot(x=1:100, y=error, type="l",
 			\label{fig:median}
 		\end{figure}
 	
-		The blue line looks closer to the ``middle'' than the red line, doesn't it? The red line has been pulled towards the extreme high value of Mr.~Harbaugh, while the blue line hasn't. If you are looking to \emph{describe} a distribution, I argue that the median will give you a better idea of the central tendency than the mean for this reason. However, the mean has mathematical properties that give it more applications in the realm of inferential statistics, as we will see in chapter~\ref{chap:inferential}.
+		The blue line looks closer to the ``middle'' than the red line, doesn't it? The red line has been pulled towards the extreme high value of the head coach at 7~million\$, while the blue line hasn't. If you are looking to \emph{describe} a distribution, I argue that the median will give you a better idea of the central tendency than the mean for this reason. However, the mean has mathematical properties that give it more applications in the realm of inferential statistics, as we will see in chapter~\ref{chap:inferential}.
 	
 		\subsection{Mode}
 		\notefor{Useful if you want to guess}
@@ -1612,6 +1657,12 @@ plot(x=1:100, y=error, type="l",
 		\subsection{Branching}\label{subsec:branching}
 	\section{Functions}
 	\section{Misc}
+		\subsection{Real saga}
+		\subsection{Rounding}
+		
+		\begin{minted}[breaklines]{R}
+			round(.5 + -2:4) # IEEE / IEC rounding: -2  0  0  2  2  4  4
+		\end{minted}
 	
 \chapter{More eccentric graphs}
 	\section{Rate plot}\label{sec:cdplot}
