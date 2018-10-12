@@ -1312,7 +1312,7 @@ plot(chsi$Diabetes ~ chsi$No_Exercise, pch=20,
 	
 	See also section~\ref{sec:cdplot} for a way to plot a more solid dataset, the NHIS raw data, which contains data on individuals, chosen to be representative of the US population as a whole. Since this data presents diabetes as a ``yes/no'' variable, a different, less common technique is used: the conditional-density plot.
 	
-	\section{Box and whiskers graph}
+	\section{Box and whiskers graph}\label{sec:boxplot}
 	\notefor{For a \gls{qtv}}
 	
 	This graph, while a visual representation of data, offers a nice bridge to the next section, since it does a lot of \emph{description} of the data.
@@ -1522,7 +1522,7 @@ hist(means,
 	main="")
 			\end{minted}
 			
-			As you can see, sample averages of around 15, which is the population average, happen most often; the \emph{average of sample averages} is the population average. Sample average follows a classic bell-shaped distribution.
+			As you can see, sample averages of around 15, which is the population average, happen most often; the \emph{average of sample averages} is the population average. Sample average follows a classic bell-shaped distribution, called a \emph{normal distribution}, which we will see in much detail in a further section.
 
 			\begin{figure}[h]
 				\centering
@@ -1533,7 +1533,7 @@ hist(means,
 			
 			Obviously, the bigger your sample, the better your estimate. If you put your cages down and wait until you've caught 100~different \species{R. virtualis}, obviously, you will have the perfect mean. At the opposite side of the spectrum, if you capture only one individual and take that as a population mean, your error is likely to be much greater.
 			
-			Again using R programming that is not the point here, let's virtually sample our imaginary population repeatedly. Let's test all sample sizes from 1 to 100~individuals, and repeat each sample size 1000~times. Further, let's use \code{absolute(sample mean - population mean)} as a measure of error, that is, the distance between the sample and population means. As you might expect, your average error goes down quickly as you pick a bigger sample size, as seen in figure~\ref{fig:avge}.
+			Again using R programming that is not the point here, let's virtually sample our imaginary population repeatedly. Let's test all sample sizes from 1 to 100~individuals, and repeat each sample size 1000~times. Further, let's use \code{absolute(sample mean - population mean)} as a measure of error, that is, the distance between the sample and population means. As you might expect, your error goes down quickly as you pick a bigger sample size, as seen in figure~\ref{fig:avge}.
 			
 			\begin{figure}[h]
 				\centering
@@ -1842,10 +1842,94 @@ $ Pensacola: int  350000 228000 131500 139000 138000 117000 ...
 			
 			\subsubsection{Sample variance distribution}
 			
+			The variance of a \emph{sample} is subject to the same effects as the mean of a sample. That means that if you sample the same population in the same manner several times, you will get slightly different means every time, and slightly different variances as well. Moreover, the sample variance will have a distribution of its own as well. Let's take a look at it with our \species{R. virtualis} again.
+			
+			As with the means, the bigger your sample, the closer the estimate gets to the actual parameter for the whole population. The code below simulates 1000~samplings for each possible sample size and saves each standard deviation in a matrix. The result can be seen in figure~\ref{fig:sds}, where the theoretical standard deviation is shown as the red line.
+			
 			\begin{minted}[breaklines]{R}
+> sd(fishies)
+[1] 3.271533
+> # create an empty matrix to save the standard deviations
+> sds = matrix(0, ncol=100, nrow=1000)
+> for(n in 1:100) # for all sample sizes
++ {
++   for(i in 1:1000) # for 1000 times
++   {
++     sample=sample(fishies, n) # take a sample of size n
++     sds[i, n] = sd(sample) # save the sample standard deviation
++   }
++ }
 			\end{minted}
+			
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{sds.png}
+				\caption{Sample standard deviations for 1000~samplings for each possible sample size.}
+				\label{fig:sds}
+			\end{figure}
+			
+			This result should not surprise you. The bigger your sample, the more information you have about the whole population, so the closer your estimate gets to the population parameter.
+			
+			The other thing we saw about the mean was that for a given sample size, the estimate has a distribution of its own. In the case of the mean, it was a bell curve. What about the standard deviation, is it the same? Not quite; if you observe figure~\ref{fig:sd_distr} attentively, you will notice that the distribution is asymmetrical. The slope is softer on the right side, so the higher $s$ values are more frequent. This is not an illusion or just a consequence of the random samples we drew; we will see in a further section that a mathematician (another one we'd need to hug, but Mr. Cochran passed in 1980 \cite{cochran}) figured the exact formula for that curve, called $\chi^2$ or chi square.
+			
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=1.0\textwidth]{sd_distr.eps}
+				\caption{Histogram of the sample standard deviation for 1000~samplings with a sample size of 10.}
+				\label{fig:sd_distr}
+			\end{figure}
 		
 		\subsection{Quartiles and percentiles}
+		\notefor{All you can do with ranks}
+		
+		Quartiles and percentiles refer to a kind of ``rank'' of each value in a dataset. If you take a data set, sort its values from smallest to greatest and divide it into four equal subsets, you have just divided the distribution into its quartiles. The first quartile is the one containing the smallest 25\% of the values. Q1 would be the upper bound of the quartile. Likewise, Q2 would be the value that is greater than 50\% of values, also known as the median. Q3 and Q4 are defined as values greater than 75\% and 100\% of values, respectively. The minimum is often referred to as Q0 in this context. Since a picture is worth a thousand words, let's take a second look at box-and-whiskers graphs. Most plotting functions in R actually return an object when you run them, in addition to producing the visual representation. You can do so with \code{boxplot} and then use calculations that R already prepared and formatted for you. With the insurance coverage for US states used in section~\ref{sec:boxplot}, this yields the code below and figure~\ref{fig:queues}.
+		
+		\begin{minted}[breaklines]{R}
+> b = boxplot(hic$X2014, ylim=c(0, 20), # save the boxplot return
+ + ylab="Percent of uninsured persons", 
+ + main="Uninsured rate for US states")
+> # b is full of goodies now; `stats` is Q0-Q4
+> b
+$`stats`
+      [,1]
+[1,]  3.30
+[2,]  8.45
+[3,] 10.10
+[4,] 12.80
+[5,] 19.10
+
+$n
+[1] 51
+
+$conf
+          [,1]
+[1,]  9.137587
+[2,] 11.062413
+
+$out
+numeric(0)
+
+$group
+numeric(0)
+
+$names
+[1] ""
+
+> text(x=1.2, y=b$stats[,1], col="blue",
+ +   labels=c("Q0", "Q1", "Q2 or median", "Q3", "Q4"), pos=4)
+> text(x=0.8, y=b$stats[,1], col="blue",
+ +   labels=b$stats[,1], pos=2)
+		\end{minted}
+		
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1.0\textwidth]{quartiles.eps}
+			\caption{Quartiles for the uninsured rate among USA states.}
+			\label{fig:queues}
+		\end{figure}
+		
+		\begin{minted}[breaklines]{R}
+		\end{minted}
 		
 	\section{Shape measurements}
 		\subsection{Skewness}
