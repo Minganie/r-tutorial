@@ -1879,10 +1879,13 @@ $ Pensacola: int  350000 228000 131500 139000 138000 117000 ...
 				\label{fig:sd_distr}
 			\end{figure}
 		
-		\subsection{Quartiles and percentiles}
+		\subsection{Quantiles}
 		\notefor{All you can do with ranks}
 		
-		Quartiles and percentiles refer to a kind of ``rank'' of each value in a dataset. If you take a data set, sort its values from smallest to greatest and divide it into four equal subsets, you have just divided the distribution into its quartiles. The first quartile is the one containing the smallest 25\% of the values. Q1 would be the upper bound of the quartile. Likewise, Q2 would be the value that is greater than 50\% of values, also known as the median. Q3 and Q4 are defined as values greater than 75\% and 100\% of values, respectively. The minimum is often referred to as Q0 in this context. Since a picture is worth a thousand words, let's take a second look at box-and-whiskers graphs. Most plotting functions in R actually return an object when you run them, in addition to producing the visual representation. You can do so with \code{boxplot} and then use calculations that R already prepared and formatted for you. With the insurance coverage for US states used in section~\ref{sec:boxplot}, this yields the code below and figure~\ref{fig:queues}.
+		Quantiles are a type of ``rank'' of each value in a dataset. If you take a data set, sort its values from smallest to greatest and divide it into $n$ equal subsets, each threshold value is a quantile. Quartiles, where you divide the data into four parts, and percentiles, where you divide the data into one hundred parts, are the most common quantiles. If a data point is in a high quantile, it means it is greater than most of the other points in the data. It gives an idea of its rank among the distribution.
+		
+		\subsubsection{Quartiles}
+		You obtain quartiles when you divide your sorted distribution into four equal parts. The first quarter is the one containing the smallest 25\% of the values. The first quartile, Q1, would be the upper bound of the quartile. Likewise, Q2 would be the value that is greater than 50\% of values, also known as the median. Q3 is defined as values greater than 75\% of values. The minimum and maximum are often referred to as Q0 and Q4 in this context. Since a picture is worth a thousand words, let's take a second look at box-and-whiskers graphs. Most plotting functions in R actually return an object when you run them, in addition to producing the visual representation. You can do so with \code{boxplot} and then use calculations that R already prepared and formatted for you. With the insurance coverage for US states used in section~\ref{sec:boxplot}, this yields the code below and figure~\ref{fig:queues}.
 		
 		\begin{minted}[breaklines]{R}
 > b = boxplot(hic$X2014, ylim=c(0, 20), # save the boxplot return
@@ -1927,6 +1930,9 @@ $names
 			\caption{Quartiles for the uninsured rate among USA states.}
 			\label{fig:queues}
 		\end{figure}
+		
+		\subsubsection{Percentiles}
+		To compute percentiles, we will use the generic \code{quantile} function. This R function can compute any kind of quantile; by default, it computes the quartiles, but you can define specific quantiles at will. For example, 
 		
 		\begin{minted}[breaklines]{R}
 		\end{minted}
