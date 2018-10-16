@@ -1,13 +1,14 @@
 \documentclass{report}
 
 \usepackage[backend=bibtex]{biblatex}
+\usepackage[table]{xcolor}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{lmodern}
 \usepackage{minted}
 \usepackage{multirow}
 \usepackage{subcaption}
-\usepackage{tabularx}
+\usepackage{tabularx, booktabs}
 \usepackage{tcolorbox}
 \usepackage[utf8]{inputenc}
 \usepackage{hyperref}
@@ -34,6 +35,9 @@
 \newcommand{\species}[1]{\textit{#1}}
 \newcommand{\notefor}[1]{\hfill\textbf{\textit{#1}}}
 \renewcommand{\glstextformat}[1]{\textbf{#1}}
+
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
 \addbibresource{Rtutorial.bib}
 \makenoidxglossaries
 
@@ -1932,7 +1936,72 @@ $names
 		\end{figure}
 		
 		\subsubsection{Percentiles}
-		To compute percentiles, we will use the generic \code{quantile} function. This R function can compute any kind of quantile; by default, it computes the quartiles, but you can define specific quantiles at will. For example, 
+		To compute percentiles, we will use the generic \code{quantile} function. This R function can compute any kind of quantile; by default, it computes the quartiles, but you can define specific quantiles at will. For example, let's use simulated data that closely approaches results in mathematics for the 64,522~Maryland students who took part in the National Assessment of Educational Progress (NAEP) study \cite{naep, mdnaep}. Since the grades themselves were not available, I created a dataset of 64,522~grades which distribution closely matches the average and quartiles reported for grade~8 mathematics in the state of Maryland. This data is available in this repository in the file ``grades.csv''. We will use the \code{quantile} function to compute the percentiles, and the utility function \code{seq} to create the series of numbers 0, 0.01, 0.02, ...
+		
+		\begin{minted}[breaklines]{R}
+> grades = read.csv("C:/.../r-tutorial/grades.csv")
+> # let's compare with the real data: 
+> # percentiles: 10%=233, 25%=256, 50%=283, 75%=310, 90%=333
+> quantile(grades$x, probs=c(0.1, 0.25, 0.5, 0.75, 0.9))
+#     10%      25%      50%      75%      90% 
+#231.9428 254.9132 281.6349 310.2256 337.5773 
+> # mean=283
+> mean(grades$x)
+[1] 283.5715
+> # now let's compute all percentiles with the help of seq
+> quantile(grades$x, probs=seq(from=0, to=1, by=0.01))
+#      0%       1%       2%       3%       4%       5%       6% 
+# 135.6407 196.3873 205.2305 210.7864 215.1853 218.8149 222.0407 
+#      7%       8%       9%      10%      11%      12%      13% 
+# 224.7266 227.2375 229.7028 231.9428 233.9829 235.8240 237.5704 
+#      14%      15%      16%      17%      18%      19%      20% 
+# 239.3259 240.9736 242.5754 244.1273 245.5668 247.0386 248.3926 
+#      21%      22%      23%      24%      25%      26%      27% 
+# 249.7503 251.0583 252.2719 253.5969 254.9132 256.1516 257.3100 
+#      28%      29%      30%      31%      32%      33%      34% 
+# 258.5156 259.6718 260.7826 261.8478 262.9753 264.0899 265.1781 
+#      35%      36%      37%      38%      39%      40%      41% 
+# 266.1914 267.2425 268.2216 269.3102 270.2821 271.2781 272.2973 
+#      42%      43%      44%      45%      46%      47%      48% 
+# 273.3109 274.3306 275.4356 276.4522 277.4675 278.5567 279.6178 
+#      49%      50%      51%      52%      53%      54%      55% 
+# 280.6309 281.6349 282.7612 283.8356 284.8729 285.8683 286.9525 
+#      56%      57%      58%      59%      60%      61%      62% 
+# 287.9793 288.9420 289.9321 290.9749 292.0631 293.0908 294.1924 
+#      63%      64%      65%      66%      67%      68%      69% 
+# 295.2963 296.4629 297.6531 298.8880 300.0099 301.1797 302.3754 
+#      70%      71%      72%      73%      74%      75%      76% 
+# 303.5894 304.8445 306.1596 307.4950 308.7542 310.2256 311.5789 
+#      77%      78%      79%      80%      81%      82%      83% 
+# 313.0074 314.5216 315.9819 317.4632 319.0430 320.7646 322.4913 
+#      84%      85%      86%      87%      88%      89%      90% 
+# 324.3773 326.1877 328.1637 330.3559 332.4600 334.9796 337.5773 
+#      91%      92%      93%      94%      95%      96%      97% 
+# 340.4564 343.4606 346.8258 350.5101 354.8903 360.2036 366.9694 
+#      98%      99%     100% 
+# 374.9928 389.2549 495.0074 
+		\end{minted}
+		
+		As a note, there are several algorithms to compute quantiles, which may vary from software to software (Yay.). If you need your results to fit with someone's SAS, for instance, you can set the algorithm with the argument \code{type}. The available algorithms are listed in the help page for \code{quantile}.
+		
+		If you ever wanted to compute the ``reverse quantile'', that is, you have a value and want to know its percentile, you can use the function \code{ecdf}, which we will see in greater detail in the statistics chapter. For now, let's just say it uses a peculiar syntax: \code{ecdf(all data points)(data points of interest)}, and will return the percentage of all the data points that are smaller than each point of interest.
+		
+		\begin{minted}[breaklines]{R}
+> # one point of interest, let's pick a random grade
+> grade = sample(grades$x, 1)
+> grade
+[1] 292.992
+> ecdf(grades$x)(grade) # grade percentile is 60
+[1] 0.6092496
+> # several points of interest, let's pick four
+> four = sample(grades$x, 4)
+> four
+[1] 280.8658 251.1482 408.6354 298.0227
+> ecdf(grades$x)(four)
+[1] 0.4922507 0.2208394 0.9966523 0.6531881
+> # 280.8658's percentile is 49, etc.
+		\end{minted}
+
 		
 		\begin{minted}[breaklines]{R}
 		\end{minted}
@@ -1946,13 +2015,87 @@ $names
 		
 		\subsection{L-moments}
 
-\chapter{Probabilities}
+\chapter{Probabilities and statistics}
+	\section{Probabilities}
+	This chapter is less about R than it is about the theory of statistics, but R will be heavily used as a tool to illustrate the principles.
+	
+	A good first question would be, what is a probability? It is the likelihood that an outcome will occur in a random event. A probability will be between 0 (impossible) and 1 (certain).
+	
+	In general, a probability can be calculated as the number of favorable outcomes divided by the total number of possible outcomes. For instance, if you toss a coin in the hopes of getting tails, the probability is 1/2 because there is one tails face, out of two coin faces.
+	
+	The set of all possible outcomes is called the \emph{sample space} or $\omega$.
+	
+	If you play Arkham Horror, a success on a die roll is described as rolling a 5 or a 6. The probability of a success, therefore, is 2/6 or 1/3, since two out of the six sides of the die are favorable.
+	
+	This simple principle can be applied further. For example, if you roll two die at once and sum the result, what is the probability of obtaining seven? There are 36 possible die casts: 1+1, 1+2, 2+1, ..., as shown in table~\ref{tab:die}. Since six casts sum to seven, as the green highlighted cells in the table show, the probability is 6/36 or 1/6.
+
+\begin{center}
+	\begin{table}
+		\centering
+		\begin{tabularx}{0.8\textwidth}{| c | Y Y Y Y Y Y |}
+			\toprule
+			& 1 & 2 & 3 & 4 & 5 & 6 \\		
+			\midrule
+			1 & 2 & 3 & 4 & 5 & 6 & \cellcolor{green!25}7 \\	
+			2 & 3 & 4 & 5 & 6 & \cellcolor{green!25}7 & 8 \\	
+			3 & 4 & 5 & 6 & \cellcolor{green!25}7 & 8 & 9 \\	
+			4 & 5 & 6 & \cellcolor{green!25}7 & 8 & 9 & 10 \\	
+			5 & 6 & \cellcolor{green!25}7 & 8 & 9 & 10 & 11 \\	
+			6 & \cellcolor{green!25}7 & 8 & 9 & 10 & 11 & 12 \\	
+			\bottomrule
+		\end{tabularx}
+		\caption{Sum of two die rolls.}
+		\label{tab:die}
+	\end{table}
+\end{center}
+
+	\subsection{Order sometimes matter}
+
+	Now, whether you cast three and then four, or four and then three, it both sums to seven, so \emph{order} is not important in this case. However, that is not always the case.
+	
+	Let's consider horse races. One type of bet one can place on such a race is called a \emph{trifecta}, and requires to pick the first, second and third horse. Obviously, in this case, order is important. For example, Secretariat-Eclipse-Northern Dancer is a different trifecta than Eclipse-Secretariat-Northern Dancer. So, if you want to compute the probability of winning by placing a bet on a given trifecta, you need to figure out how many trifectas are possible. Let's say the race admits fifteen horses.
+	
+	You have fifteen horses to choose from to ``pick'' the first horse. Since a horse can only occupy one position, you have fourteen horses left as possibilities for the second place, and then thirteen horses left for the third place. For each first place, of which you have fifteen, you have fourteen possible second places, and so on. Mathematically, that is:
+	
+	\[
+	n = 15 * 14 * 13 = 2730
+	\]
+	
+	So you have a probability of 1/2730 to pick the right trifecta. But let's play with the idea a bit more. What is the probability of placing a good ``show'' bet, that is, picking a horse that will finish first, second or third?
+	
+	We already know that there is a total of 2730 possible trifectas. So how many trifectas include our favorite for showing, let's say Moonfall? Well, that is the sum of all the trifectas where she finishes first, all the trifectas where she's second, and all the trifectas where she's third. The trifectas where she's first is quite simple to compute:
+	
+	\[
+	n = 1 * 14 * 13 = 182
+	\]
+
+	However, when you want to compute the number of trifectas where she's second, there is only 14~horses left for the first place, and 13~for the third place, like so:
+	
+	\[
+	n = 14 * 1 * 13 = 182
+	\]
+	
+	Similarly, if Moonfall finishes third, there's only 14~possibilities for the first place and 13~possibilities for the third place:
+	
+	\[
+	n = 14 * 13 * 1 = 182
+	\]
+	
+	Putting it all together, we get:
+	\[
+	(182+182+182)/2730 = 0.2
+	\]
+	
+	So you have 1/5 chances to pick a good horse for showing. You might also have reasoned that the probability for Moonfall to be among the three first horses was the chance that she was first, or second, or third. Her chance of being first is 1/15, her chance or being second is 1/15 and her chance of being third is also 1/15. Interestingly, 1/15+1/15+1/15= 3/15 = 1/5 = 0.2
+	
+	\subsection{Probability of multiple outcomes}
+	It is a reasonably well-known characteristic of probabilities that, if you want the probability of one thing \emph{or} another happening, you sum the two probabilities. This is what we did in the previous paragraph with Moonfall, and it yielded a consistent result with the calculations of numbers of trifectas. Formally, if $A$ and $B$ are the desired outcomes
+	
 	\section{Factorial}
 	\section{Combinations}
 	\section{Permutations}
 	\section{Probability Mass/Density Function}
-
-\chapter{Statistics}
+	\section{Theoretical distributions}
 	\section{Discrete variables}
 		\subsection{Binomial distribution}
 		\subsection{Multinomial distribution}
@@ -1966,6 +2109,7 @@ $names
 		\subsection{c2 distribution}
 		\subsection{Fisher-Snedecor distribution}
 		\subsection{Student’s law}
+	\section{Empirical distribution}
 
 \chapter{Inferential statistics}\label{chap:inferential}
 	\section{Student’s test}
